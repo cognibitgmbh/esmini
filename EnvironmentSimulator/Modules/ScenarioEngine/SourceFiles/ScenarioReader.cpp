@@ -3806,12 +3806,12 @@ OSCCondition *ScenarioReader::parseOSCCondition(pugi::xml_node conditionNode)
                         for (pugi::xml_node relClearanceChild = condition_node.first_child(); relClearanceChild;
                              relClearanceChild                = relClearanceChild.next_sibling())
                         {
-                            if (std::strcmp(relClearanceChild.name(),"EntityRef") == 0)
+                            if (std::strcmp(relClearanceChild.name(), "EntityRef") == 0)
                             {  // populate all entity
                                 object_ = ResolveObjectReference(parameters.ReadAttribute(relClearanceChild, "entityRef"));
                                 trigger->objects_.push_back(object_);
                             }
-                            else if  (std::strcmp(relClearanceChild.name(),"RelativeLaneRange") == 0)
+                            else if (std::strcmp(relClearanceChild.name(), "RelativeLaneRange") == 0)
                             {
                                 if (!parameters.ReadAttribute(relClearanceChild, "to").empty())
                                 {  // populate only if available else use default

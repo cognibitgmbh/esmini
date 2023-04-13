@@ -1542,7 +1542,7 @@ bool TrigByRelativeClearance::CheckCondition(StoryBoard* storyBoard, double sim_
                         break;
                     }
                     else
-                    { // ds is within range but not within lane range and opposite direction condition
+                    {  // ds is within range but not within lane range and opposite direction condition
                         objFound = false;
                     }
                 }
