@@ -1500,8 +1500,6 @@ bool TrigByRelativeClearance::CheckCondition(StoryBoard* storyBoard, double sim_
         Object* entityObject = triggering_entities_.entity_[i].object_;
 
         Object* refObject_;
-        int     visitedObj_count = 0;
-        int     objToVisit_count = 0;
 
         for (size_t j = 0; j < storyBoard->entities_->object_.size(); j++)
         {
@@ -1536,12 +1534,16 @@ bool TrigByRelativeClearance::CheckCondition(StoryBoard* storyBoard, double sim_
                 }
                 else
                 {
-                    // found object is within specified distance rante, check lane range and opposite direction condition
+                    // found object is within specified distance range, check lane range and opposite direction condition
                     if ((diff.dLaneId >= from_) && (diff.dLaneId <= to_) &&
                         !(!oppositeLanes_ && diff.dOppLane))  // reject objects in opposite lane if we don't want them
                     {
-                        // We found at least ONE object in the specified clearande area (lane and distance range)
+                        // We found at least ONE object in the specified clearance area (lane and distance range)
                         break;
+                    }
+                    else
+                    { // ds is within range but not within lane range and opposite direction condition
+                        objFound = false;
                     }
                 }
             }
