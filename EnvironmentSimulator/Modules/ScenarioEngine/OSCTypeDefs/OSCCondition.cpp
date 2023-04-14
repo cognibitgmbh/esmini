@@ -1510,7 +1510,7 @@ bool TrigByRelativeClearance::CheckCondition(StoryBoard* storyBoard, double sim_
                 continue;
             }
 
-            if (((from_ > 0 && to_ > 0) && (from_ > to_)) || ((from_ < 0 && to_ < 0) && (from_ < to_)) || (from_ > 0 && to_ < 0))
+            if (from_ > to_)
             {  // quit execution if to value is less than from value
                 LOG_AND_QUIT("QUITTING, Wrong from and to value in RelativeLaneRange element");
             }
