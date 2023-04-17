@@ -656,6 +656,7 @@ bool TrigByTimeHeadway::CheckCondition(StoryBoard* storyBoard, double sim_time)
 
     for (size_t i = 0; i < triggering_entities_.entity_.size(); i++)
     {
+        result = false;
         Object* trigObj = triggering_entities_.entity_[i].object_;
         if (!trigObj->IsActive() || (object_ && !object_->IsActive()))
         {
@@ -719,6 +720,7 @@ bool TrigByTimeToCollision::CheckCondition(StoryBoard* storyBoard, double sim_ti
 
     for (size_t i = 0; i < triggering_entities_.entity_.size(); i++)
     {
+        result = false;
         Object* trigObj = triggering_entities_.entity_[i].object_;
         if (!trigObj->IsActive())
         {
@@ -1500,6 +1502,7 @@ bool TrigByRelativeClearance::CheckCondition(StoryBoard* storyBoard, double sim_
         Object* entityObject = triggering_entities_.entity_[i].object_;
 
         Object* refObject_;
+        result = false;
 
         for (size_t j = 0; j < storyBoard->entities_->object_.size(); j++)
         {
