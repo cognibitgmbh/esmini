@@ -1493,6 +1493,8 @@ bool TrigByRelativeClearance::CheckCondition(StoryBoard* storyBoard, double sim_
     (void)storyBoard;
     (void)sim_time;
 
+    triggered_by_entities_.clear();
+
     bool   result   = false;
     bool   objFound = false;
     double maxDist  = MAX(distanceForward_, distanceBackward_);
