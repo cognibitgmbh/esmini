@@ -175,6 +175,9 @@ void ControllerUDPDriver::Step(double timeStep)
 	int retval = 0;
 	int receivedNrOfBytes = 0;
 
+	//std::cout << "ControllerUDPDrive::step, timeStep = " << timeStep << std::endl;
+
+
 	if (execMode_ == ExecMode::EXEC_MODE_ASYNCHRONOUS)
 	{
 		// Pick all queued messages - store only the last/latest
@@ -184,6 +187,8 @@ void ControllerUDPDriver::Step(double timeStep)
 			if (retval > 0)
 			{
 				receivedNrOfBytes = retval;
+                       //   std::cout << "ASYNCHRONOUS receivedNrOfBytes = " << receivedNrOfBytes << std::endl;
+
 			}
 		}
 	}
@@ -193,6 +198,8 @@ void ControllerUDPDriver::Step(double timeStep)
 		if (retval >= 0)
 		{
 			receivedNrOfBytes = retval;
+                  std::cout << "SYNCHRONOUS receivedNrOfBytes = " << receivedNrOfBytes << std::endl;
+
 		}
 	}
 
@@ -200,12 +207,12 @@ void ControllerUDPDriver::Step(double timeStep)
 	{
 		lastMsg = msg;
 
-		//printf("version %d objectId %d framenr %d inputMode %d/%s \n",
-		//	msg.header.version,
-		//	msg.header.objectId,
-		//	msg.header.frameNumber,
-		//	msg.header.inputMode,
-		//	InputMode2Str(static_cast<InputMode>(msg.header.inputMode)).c_str());
+		printf("version %d objectId %d framenr %d inputMode %d/%s \n",
+			msg.header.version,
+			msg.header.objectId,
+			msg.header.frameNumber,
+			msg.header.inputMode,
+			InputMode2Str(static_cast<InputMode>(msg.header.inputMode)).c_str());
 
 		if (msg.header.version != UDP_DRIVER_MESSAGE_VERSION)
 		{

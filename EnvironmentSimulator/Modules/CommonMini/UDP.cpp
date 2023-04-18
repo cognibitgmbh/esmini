@@ -11,6 +11,7 @@
  */
 
 #include <stdio.h>
+#include <iostream>
 
 #ifndef _WIN32
 	#include <sys/time.h>
@@ -110,6 +111,7 @@ int UDPServer::Receive(char* buf, unsigned int size)
 	// TODO:
 	// Casting to int can cause overflow in this situation. Not a good idea.
 	// Let's fix it in a way that we actually return size_t and design the flow like that
+  //std::cout << "UDPServer::Receive, size =  " << size << ", port = " << server_addr_.sin_port << std::endl;
 	return static_cast<int>(recvfrom(sock_, buf, size, 0, reinterpret_cast<struct sockaddr*>(&sender_addr_), &sender_addr_size_));
 }
 
@@ -129,5 +131,7 @@ int UDPClient::Send(char* buf, unsigned int size)
 	// TODO:
 	// Casting to int can cause overflow in this situation. Not a good idea.
 	// Let's fix it in a way that we actually return size_t and design the flow like that
+ // std::cout << "UDPClient::Send, size =  " << size << ", serverAddr = " << server_addr_.sin_addr.s_addr << ":" << server_addr_.sin_port << std::endl;
+
 	return static_cast<int>(sendto(sock_, buf, size, 0, reinterpret_cast<struct sockaddr*>(&server_addr_), sizeof(server_addr_)));
 }

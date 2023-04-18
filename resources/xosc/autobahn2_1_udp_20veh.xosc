@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This scenario demonstrates the keep distance action -->
+<OpenSCENARIO>
+   <FileHeader revMajor="1"
+               revMinor="1"
+               date="2021-07-27T10:00:00"
+               description="Keep distance"
+               author="esmini team"/>
+   <ParameterDeclarations>
+      <ParameterDeclaration name="Gap_dist1" parameterType="double" value="10"/>
+      <ParameterDeclaration name="Gap_dist2" parameterType="double" value="4"/>
+      <ParameterDeclaration name="Max_acc" parameterType="double" value="15"/>
+      <ParameterDeclaration name="Max_ret" parameterType="double" value="15"/>
+   </ParameterDeclarations>
+   <CatalogLocations>
+      <VehicleCatalog>
+         <Directory path="../xosc/Catalogs/Vehicles"/>
+      </VehicleCatalog>
+   </CatalogLocations>
+   <RoadNetwork>
+      <LogicFile filepath="../xodr/autobahn2_new_1.xodr"/>
+      <!-- <SceneGraphFile filepath="../models/straight_500m.osgb"/> -->
+   </RoadNetwork>
+   <Entities>
+      <ScenarioObject name="Vehicle1">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_white"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+      <ScenarioObject name="Vehicle2">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_blue"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle3">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_red"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle4">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_yellow"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle5">
+         <CatalogReference catalogName="VehicleCatalog" entryName="truck_yellow"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle6">
+         <CatalogReference catalogName="VehicleCatalog" entryName="van_red"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle7">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_white"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle8">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_red"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle9">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_blue"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle10">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_yellow"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle11">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_white"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle12">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_white"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle13">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_blue"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle14">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_red"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle15">
+         <CatalogReference catalogName="VehicleCatalog" entryName="van_red"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle16">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_blue"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle17">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_yellow"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle18">
+         <CatalogReference catalogName="VehicleCatalog" entryName="truck_yellow"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle19">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_white"/>
+         <ObjectController>
+            <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+       <ScenarioObject name="Vehicle20">
+         <CatalogReference catalogName="VehicleCatalog" entryName="car_blue"/>
+         <ObjectController>
+         <Controller name="UDPDriverController">
+               <Properties>
+                  <Property name="basePort" value="53995" />
+                  <Property name="port" value="0" />
+                  <Property name="execMode" value="synchronous" />
+               </Properties>
+            </Controller>
+         </ObjectController>
+      </ScenarioObject>
+   </Entities>
+   <Storyboard>
+      <Init>
+         <Actions>
+              <Private entityRef="Vehicle1">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-2" offset="0.0" s="0.0"/>
+                        <!--<WorldPosition x="2005.18920898437" y="8.5793924331665" h="0.5"/>-->
+                        <!--<WorldPosition x="600.0" y="-6.0" h="0.0"/>-->
+                        <!--<WorldPosition x="2472.49243164" y="112.07552338" h="0.39607883285911644"/>-->
+                     </Position>
+                  </TeleportAction>
+                 </PrivateAction> 
+                 <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+                 </PrivateAction>
+               </Private> 
+               <Private entityRef="Vehicle2">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-4" offset="0.0" s="0.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction> 
+               </Private>
+               <Private entityRef="Vehicle3">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-3" offset="0.0" s="50.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle4">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-2" offset="0.0" s="100.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle5">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-4" offset="0.0" s="150.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle6">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-3" offset="0.0" s="200.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle7">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-2" offset="0.0" s="250.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle8">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-4" offset="0.0" s="300.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle9">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-3" offset="0.0" s="350.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle10">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-2" offset="0.0" s="400.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle11">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-4" offset="0.0" s="450.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle12">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-3" offset="0.0" s="500.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle13">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-2" offset="0.0" s="550.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle14">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-4" offset="0.0" s="600.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle15">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-3" offset="0.0" s="650.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle16">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-2" offset="0.0" s="700.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle17">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-4" offset="0.0" s="750.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle18">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-3" offset="0.0" s="750.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle19">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-2" offset="0.0" s="800.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+               <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+               <Private entityRef="Vehicle20">
+               <PrivateAction>
+                  <TeleportAction>
+                     <Position>
+                        <LanePosition roadId="2" laneId="-4" offset="0.0" s="850.0"/>
+                     </Position>
+                  </TeleportAction>
+               </PrivateAction> 
+                <PrivateAction>
+                  <ControllerAction>
+                     <ActivateControllerAction longitudinal="true" lateral="true"/>
+                  </ControllerAction>
+               </PrivateAction>
+               </Private>
+         </Actions>
+      </Init>
+            <Story name="Story_DistTest">
+         <ParameterDeclarations>
+            <ParameterDeclaration parameterType="string" name="owner" value="Dummy"/>
+         </ParameterDeclarations>
+         <Act name="Act_DistTest">
+            <ManeuverGroup maximumExecutionCount="1" name="NonContinuousDistManeuverGroup">
+                    <!--  <Actors selectTriggeringEntities="false">
+                  <EntityRef entityRef="Dummy"/>
+                            </Actors>--> <!--
+               <Maneuver name="DistManeuver">
+                  <Event name="ContinuousDistEvent" priority="overwrite">
+                     <Action name="NonContinuousDistAction">
+                        <PrivateAction>
+                           <LongitudinalAction>
+                              <LongitudinalDistanceAction continuous="true"
+                                                          entityRef="Ego"
+                                                          distance="$Gap_dist1"
+                                                          freespace="true">
+                                 <DynamicConstraints maxAcceleration="$Max_acc" maxDeceleration="$Max_ret" maxSpeed="40"/>
+                              </LongitudinalDistanceAction>
+                           </LongitudinalAction>
+                        </PrivateAction>
+                     </Action>
+                     <StartTrigger/>
+                  </Event>
+                  <Event name="NonContinuousDistEvent" priority="overwrite">
+                     <Action name="NonContinuousDistAction">
+                        <PrivateAction>
+                           <LongitudinalAction>
+                              <LongitudinalDistanceAction continuous="false"
+                                                          entityRef="Ego"
+                                                          distance="$Gap_dist2"
+                                                          freespace="true"
+                                                          displacement="trailingReferencedEntity" >
+                                 <DynamicConstraints maxAcceleration="$Max_acc" maxDeceleration="$Max_ret" maxSpeed="40"/>
+                              </LongitudinalDistanceAction>
+                           </LongitudinalAction>
+                        </PrivateAction>
+                     </Action>
+                     <StartTrigger>
+                        <ConditionGroup>
+                           <Condition name="OverTakerStartSpeedCondition"
+                                      delay="0"
+                                      conditionEdge="none">
+                              <ByEntityCondition>
+                                 <TriggeringEntities triggeringEntitiesRule="any">
+                                    <EntityRef entityRef="Ego"/>
+                                 </TriggeringEntities>
+                                 <EntityCondition>
+                                    <ReachPositionCondition tolerance="2.0">
+                                       <Position>
+                                          <LanePosition roadId="1" laneId="-1" s="250.0"/>
+                                       </Position>
+                                    </ReachPositionCondition>
+                                 </EntityCondition>
+                              </ByEntityCondition>
+                           </Condition>
+                        </ConditionGroup>
+                     </StartTrigger>
+                  </Event>
+          </Maneuver> -->
+                 </ManeuverGroup> 
+            <StartTrigger/>
+         </Act>
+      </Story> 
+
+<!-- This scenario demonstrates the keep distance action 
+      <StopTrigger>
+         <ConditionGroup>
+            <Condition name="QuitCondition" delay="4" conditionEdge="rising">
+               <ByValueCondition>
+                  <StoryboardElementStateCondition storyboardElementType="event"
+                                                   storyboardElementRef="NonContinuousDistEvent"
+                                                   state="endTransition"/>
+               </ByValueCondition>
+            </Condition>
+         </ConditionGroup>
+      </StopTrigger> -->
+   </Storyboard>
+</OpenSCENARIO>

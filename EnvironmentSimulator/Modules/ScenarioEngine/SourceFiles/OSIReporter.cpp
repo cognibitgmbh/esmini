@@ -14,6 +14,8 @@
 #include "OSIReporter.hpp"
 #include <cmath>
 
+#include <windows.h>
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <Ws2tcpip.h>
@@ -284,6 +286,11 @@ int OSIReporter::UpdateOSIGroundTruth(const std::vector<std::unique_ptr<ObjectSt
 			}
 
 			int sendResult = udp_client_->Send(reinterpret_cast<char *>(&osi_udp_buf), static_cast<unsigned int>(packSize)); // TODO: @Emil
+            if (osi_update_counter_ == 0)
+            {
+              std::cout << "Send initial ground truth, counter = " << osi_udp_buf.counter << ", sendResult = " << sendResult << std::endl;
+              Sleep(100);
+            }
 
 			if (sendResult != packSize)
 			{
@@ -678,8 +685,10 @@ int OSIReporter::UpdateOSIMovingObject(ObjectState *objectState)
 		}
 		else
 		{
+               //   std::cout << "A: " << objectState->state_.info.obj_category << std::endl;
 			obj_osi_internal.mobj->mutable_vehicle_classification()->set_type(osi3::MovingObject_VehicleClassification::TYPE_UNKNOWN);
 			LOG("OSIReporter::UpdateOSIMovingObject -> Unsupported moving object category");
+
 		}
 	}
 	else if (objectState->state_.info.obj_type == static_cast<int>(Object::Type::PEDESTRIAN))
@@ -699,11 +708,13 @@ int OSIReporter::UpdateOSIMovingObject(ObjectState *objectState)
 		else
 		{
 			obj_osi_internal.mobj->set_type(osi3::MovingObject::Type::MovingObject_Type_TYPE_UNKNOWN);
+             //     std::cout << "B: " << objectState->state_.info.obj_category << std::endl;
 			LOG("OSIReporter::UpdateOSIMovingObject -> Unsupported moving object category");
 		}
 	}
 	else
 	{
+       //   std::cout << "C: " << objectState->state_.info.obj_category << std::endl;
 		LOG("OSIReporter::UpdateOSIMovingObject -> Unsupported moving object type");
 	}
 
