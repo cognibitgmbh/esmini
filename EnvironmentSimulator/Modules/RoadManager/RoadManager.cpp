@@ -1971,6 +1971,33 @@ double Road::GetLaneWidthByS(double s, int lane_id) const
     return lsec->GetWidth(s, lane_id);
 }
 
+LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
+{
+    //return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    return LaneRoadMark::RoadMarkType::NONE_TYPE;
+}
+
+LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
+{
+    return LaneRoadMark::RoadMarkType::NONE_TYPE;
+
+    LaneSection* lsec = GetLaneSectionByS(s, 0);
+
+    if (lsec == nullptr)
+    {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+
+    Lane* lane = lsec->GetLaneById(lane_id);
+    if (lane == nullptr)
+    {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+
+    //lane->GetRoadMarkInfoByS();
+    return LaneRoadMark::RoadMarkType::SOLID;
+}
+
 Lane::LaneType Road::GetLaneTypeByS(double s, int lane_id) const
 {
     LaneSection* lsec = GetLaneSectionByS(s, 0);
@@ -11751,6 +11778,8 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         Lane::Material* m = road->GetLaneMaterialByS(GetS(), GetLaneId());
         data->friction    = m != nullptr ? m->friction : FRICTION_DEFAULT;
         data->lane_type   = road->GetLaneTypeByS(GetS(), GetLaneId());
+        data->road_mark_left = road->GetRoadMarkLeftByS(GetS(), GetLaneId());
+        data->road_mark_right = road->GetRoadMarkRightByS(GetS(), GetLaneId());
     }
 
     return ReturnCode::OK;

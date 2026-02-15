@@ -2825,6 +2825,8 @@ namespace roadmanager
         int             GetConnectingLaneId(RoadLink *road_link, int fromLaneId, id_t connectingRoadId) const;
         double          GetLaneWidthByS(double s, int lane_id) const;
         Lane::LaneType  GetLaneTypeByS(double s, int lane_id) const;
+        LaneRoadMark::RoadMarkType GetRoadMarkLeftByS(double s, int lane_id) const;
+        LaneRoadMark::RoadMarkType GetRoadMarkRightByS(double s, int lane_id) const;
         Lane::Material *GetLaneMaterialByS(double s, int lane_id) const;
         double          GetSpeedByS(double s) const;
         RoadType        GetRoadTypeByS(double s) const;
@@ -3568,6 +3570,10 @@ namespace roadmanager
         double         speed_limit;  // speed limit given by OpenDRIVE type entry
         Road::RoadType road_type;
         Road::RoadRule road_rule;
+       
+        LaneRoadMark::RoadMarkType road_mark_left;
+        LaneRoadMark::RoadMarkType road_mark_right;
+
         id_t           roadId;      // road ID
         id_t           junctionId;  // junction ID (-1 if not in a junction)
         int            laneId;      // lane ID
