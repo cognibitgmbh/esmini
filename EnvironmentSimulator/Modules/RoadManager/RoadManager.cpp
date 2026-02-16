@@ -1979,7 +1979,6 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
 
 LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
 {
-    return LaneRoadMark::RoadMarkType::NONE_TYPE;
 
     LaneSection* lsec = GetLaneSectionByS(s, 0);
 
@@ -1994,8 +1993,8 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) cons
         return LaneRoadMark::RoadMarkType::NONE_TYPE;
     }
 
-    //lane->GetRoadMarkInfoByS();
-    return LaneRoadMark::RoadMarkType::SOLID;
+    //return lane->GetRoadMarkInfoByS(s, 0);
+    return LaneRoadMark::RoadMarkType::CURB;
 }
 
 Lane::LaneType Road::GetLaneTypeByS(double s, int lane_id) const
