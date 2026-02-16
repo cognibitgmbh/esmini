@@ -1971,13 +1971,13 @@ double Road::GetLaneWidthByS(double s, int lane_id) const
     return lsec->GetWidth(s, lane_id);
 }
 
-LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
+LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(int track_id, int lane_id, double s) const
 {
     //return LaneRoadMark::RoadMarkType::NONE_TYPE;
     return LaneRoadMark::RoadMarkType::NONE_TYPE;
 }
 
-LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
+LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(int track_id, int lane_id, double s) const
 {
 
     LaneSection* lsec = GetLaneSectionByS(s, 0);
@@ -1993,8 +1993,15 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) cons
         return LaneRoadMark::RoadMarkType::NONE_TYPE;
     }
 
+    RoadMarkInfo road_mark_info = lane->GetRoadMarkInfoByS(track_id, lane_id, s);
+    //LaneRoadMark* road_mark = lane->GetLaneRoadMarkByIdx(road_mark_info.roadmark_idx_);
+    //lane->GetNumberOfRoadMarks();
+    //road_mark->GetNumberOfRoadMarkTypes();
+
+    //LaneRoadMark::RoadMarkType road_mark_type = road_mark->GetType();
     //return lane->GetRoadMarkInfoByS(s, 0);
-    return LaneRoadMark::RoadMarkType::CURB;
+    //return road_mark_type;
+    return LaneRoadMark::RoadMarkType::NONE_TYPE;
 }
 
 Lane::LaneType Road::GetLaneTypeByS(double s, int lane_id) const
@@ -11777,8 +11784,8 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         Lane::Material* m = road->GetLaneMaterialByS(GetS(), GetLaneId());
         data->friction    = m != nullptr ? m->friction : FRICTION_DEFAULT;
         data->lane_type   = road->GetLaneTypeByS(GetS(), GetLaneId());
-        data->road_mark_left = road->GetRoadMarkLeftByS(GetS(), GetLaneId());
-        data->road_mark_right = road->GetRoadMarkRightByS(GetS(), GetLaneId());
+        data->road_mark_left = road->GetRoadMarkLeftByS(GetTrackId(), GetS(), GetLaneId());
+        data->road_mark_right = road->GetRoadMarkRightByS(GetTrackId(), GetS(), GetLaneId());
     }
 
     return ReturnCode::OK;
