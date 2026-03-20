@@ -1973,8 +1973,52 @@ double Road::GetLaneWidthByS(double s, int lane_id) const
 
 LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
 {
-    //return LaneRoadMark::RoadMarkType::NONE_TYPE;
-    return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    LaneSection* lsec = GetLaneSectionByS(s, 0);
+
+    if (lsec == nullptr)
+    {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+
+    Lane* lane = lsec->GetLaneById(lane_id);
+    if (lane == nullptr)
+    {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+
+    Lane* left_lane = 0;
+    if (lane_id == 0) {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+    else if (lane_id < 0)
+    {
+        left_lane = lsec->GetLaneById(lane_id + 1);
+    }
+    else if (lane_id > 0)
+    {
+        left_lane = lsec->GetLaneById(lane_id - 1);
+    }
+    if (left_lane == nullptr)
+    {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+    
+    LaneRoadMark* lane_road_mark = 0;
+    for (unsigned int i = 0; i < left_lane->GetNumberOfRoadMarks(); i++)
+    {
+        lane_road_mark = left_lane->GetLaneRoadMarkByIdx(i);
+        if (lane_road_mark->GetSOffset() <= s)
+        {
+            break;
+        }
+    }
+    if (lane_road_mark == nullptr)
+    {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+
+    return lane_road_mark->GetType();
+    
 }
 
 LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
