@@ -1971,15 +1971,14 @@ double Road::GetLaneWidthByS(double s, int lane_id) const
     return lsec->GetWidth(s, lane_id);
 }
 
-LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(int track_id, int lane_id, double s) const
+LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
 {
     //return LaneRoadMark::RoadMarkType::NONE_TYPE;
     return LaneRoadMark::RoadMarkType::NONE_TYPE;
 }
 
-LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(int track_id, int lane_id, double s) const
+LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
 {
-
     LaneSection* lsec = GetLaneSectionByS(s, 0);
 
     if (lsec == nullptr)
@@ -1993,15 +1992,20 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(int track_id, int lane_id, 
         return LaneRoadMark::RoadMarkType::NONE_TYPE;
     }
 
-    RoadMarkInfo road_mark_info = lane->GetRoadMarkInfoByS(track_id, lane_id, s);
-    //LaneRoadMark* road_mark = lane->GetLaneRoadMarkByIdx(road_mark_info.roadmark_idx_);
-    //lane->GetNumberOfRoadMarks();
-    //road_mark->GetNumberOfRoadMarkTypes();
-
-    //LaneRoadMark::RoadMarkType road_mark_type = road_mark->GetType();
-    //return lane->GetRoadMarkInfoByS(s, 0);
-    //return road_mark_type;
-    return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    LaneRoadMark* lane_road_mark = 0;
+    for (unsigned int i = 0; i < lane->GetNumberOfRoadMarks(); i++) 
+    {
+        lane_road_mark = lane->GetLaneRoadMarkByIdx(i);
+        if (lane_road_mark->GetSOffset() <= s)
+        {
+            break;
+        }
+    }
+    if (lane_road_mark == nullptr) {
+        return LaneRoadMark::RoadMarkType::NONE_TYPE;
+    }
+    
+    return lane_road_mark->GetType();
 }
 
 Lane::LaneType Road::GetLaneTypeByS(double s, int lane_id) const
@@ -11784,8 +11788,8 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         Lane::Material* m = road->GetLaneMaterialByS(GetS(), GetLaneId());
         data->friction    = m != nullptr ? m->friction : FRICTION_DEFAULT;
         data->lane_type   = road->GetLaneTypeByS(GetS(), GetLaneId());
-        data->road_mark_left = road->GetRoadMarkLeftByS(GetTrackId(), GetS(), GetLaneId());
-        data->road_mark_right = road->GetRoadMarkRightByS(GetTrackId(), GetS(), GetLaneId());
+        data->road_mark_left = road->GetRoadMarkLeftByS(GetS(), GetLaneId());
+        data->road_mark_right = road->GetRoadMarkRightByS(GetS(), GetLaneId());
     }
 
     return ReturnCode::OK;
