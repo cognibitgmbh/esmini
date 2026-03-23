@@ -3,8 +3,7 @@ message(
            ${CMAKE_VERSION})
 
 cmake_minimum_required(
-    VERSION 3.10 # include_guard command was introduced
-    # VERSION 3.11 for VS 2017 generator, 3.14 for VS 2019, 3.21 for VS 2022
+    VERSION 3.10
     FATAL_ERROR)
 
 # ############################# Project generate options ###########################################################
