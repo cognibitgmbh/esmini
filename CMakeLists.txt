@@ -51,27 +51,27 @@ set(ENABLE_INCLUDE_WHAT_YOU_USE
           "Enable iwyu")
 
 set(DOWNLOAD_EXTERNALS
-    ON
+    OFF
     CACHE BOOL
           "Download external packages")
 
 set(USE_OSG
-    ON
+    OFF
     CACHE BOOL
           "If projects that depend on osg should be compiled.")
 
 set(USE_OSI
-    ON
+    OFF
     CACHE BOOL
           "If code that depend on osi should be compiled.")
 
 set(USE_SUMO
-    ON
+    OFF
     CACHE BOOL
           "If code that depend on sumo should be compiled.")
 
 set(USE_GTEST
-    ON
+    OFF
     CACHE BOOL
           "If unit test suites based on googletest should be compiled.")
 
@@ -81,22 +81,22 @@ set(DYN_PROTOBUF
           "Set for dynamic linking of protobuf library (.so/.dll)")
 
 set(USE_IMPLOT
-    ON
+    OFF
     CACHE BOOL
           "If implot for real-time plotting should be compiled.")
 
 set(BUILD_ODRPLOT
-    ON
+    OFF
     CACHE BOOL
           "If odrplot should be compiled.")
 
 set(BUILD_REPLAYER
-    ON
+    OFF
     CACHE BOOL
           "If replayer should be compiled.")
 
 set(BUILD_EXAMPLES
-    ON
+    OFF
     CACHE BOOL
           "If examples should be compiled.")
 
