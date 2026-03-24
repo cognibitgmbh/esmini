@@ -301,3 +301,10 @@ set(EXTERNALS_FMT_PATH
 # ############################### Compiling targets ##################################################################
 
 add_subdirectory(EnvironmentSimulator)
+
+# ############################### Add install target for python wheel build ##########################################
+
+install(TARGETS esminiRMLib
+        RUNTIME DESTINATION .
+        LIBRARY DESTINATION .
+        ARCHIVE DESTINATION .)
