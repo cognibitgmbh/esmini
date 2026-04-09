@@ -89,6 +89,17 @@ static int GetRoadInfo(int index, float lookahead_distance, void* data, int look
         r_data->road_lane_info.road_rule   = static_cast<int>(s_data.road_lane_info.road_rule);
         r_data->road_lane_info.lane_type   = static_cast<int>(s_data.road_lane_info.lane_type);
 
+            
+        r_data->road_lane_info.distance_to_lane_end_right = static_cast<float>(s_data.road_lane_info.distance_to_lane_end_right);
+        r_data->road_lane_info.distance_to_lane_end_ego = static_cast<float>(s_data.road_lane_info.distance_to_lane_end_ego);
+        r_data->road_lane_info.distance_to_lane_end_left = static_cast<float>(s_data.road_lane_info.distance_to_lane_end_left);
+
+        r_data->road_lane_info.distance_to_next_exit = static_cast<float>(s_data.road_lane_info.distance_to_next_exit);
+
+        r_data->road_lane_info.distance_to_ramp_left = static_cast<float>(s_data.road_lane_info.distance_to_ramp_left);
+        r_data->road_lane_info.distance_to_ramp_ego = static_cast<float>(s_data.road_lane_info.distance_to_ramp_ego);
+        r_data->road_lane_info.distance_to_ramp_right = static_cast<float>(s_data.road_lane_info.distance_to_ramp_right);
+
         if (probe_extension)
         {
             r_data->relative_pos.x = static_cast<float>(s_data.relative_pos[0]);

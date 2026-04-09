@@ -55,6 +55,7 @@ typedef struct
     float          roll;     // road roll
     float          width;
     float          curvature;
+    float          curvature_change;
     float          speed_limit;  // m/s
     id_t           roadId;       // target position, road ID
     id_t           junctionId;   // target position, junction ID. -1 if not in a junction.
@@ -67,6 +68,17 @@ typedef struct
     int            road_type;    // road type given by OpenDRIVE type entry, maps to roadmanager::Road::RoadType
     int            road_rule;    // road rule given by OpenDRIVE rule entry, maps to roadmanager::Road::RoadRule
     int            lane_type;    // lane type given by OpenDRIVE type entry, maps to roadmanager::Road::LaneType
+    
+    float         distance_to_lane_end_right;
+    float         distance_to_lane_end_ego;
+    float         distance_to_lane_end_left;
+
+    float         distance_to_next_exit;
+
+    float         distance_to_ramp_left;
+    float         distance_to_ramp_ego;
+    float         distance_to_ramp_right;
+
 } RM_RoadLaneInfo;
 
 typedef struct

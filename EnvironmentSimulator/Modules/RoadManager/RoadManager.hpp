@@ -3567,6 +3567,7 @@ namespace roadmanager
         double         roll;         // road roll (camber) at steering target point
         double         width;        // lane width
         double         curvature;    // road curvature at steering target point
+        double         curvature_change;
         double         speed_limit;  // speed limit given by OpenDRIVE type entry
         Road::RoadType road_type;
         Road::RoadRule road_rule;
@@ -3582,6 +3583,17 @@ namespace roadmanager
         double         t;           // t (lateral distance from reference line)
         double         friction;    // lane material friction
         Lane::LaneType lane_type;
+
+        double distance_to_lane_end_right;
+        double distance_to_lane_end_ego;
+        double distance_to_lane_end_left;
+
+        double distance_to_next_exit;
+
+        double distance_to_ramp_left;
+        double distance_to_ramp_ego;
+        double distance_to_ramp_right;
+
     } RoadLaneInfo;
 
     typedef struct

@@ -11807,6 +11807,8 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         // curvature close to zero (straight segment), radius infitite - curvature the same in all lanes
         data->curvature = curvature;
     }
+    // TODO
+    data->curvature_change = 0.0;
 
     data->pos[0]     = GetX();
     data->pos[1]     = GetY();
@@ -11834,6 +11836,16 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         data->lane_type   = road->GetLaneTypeByS(GetS(), GetLaneId());
         data->road_mark_left = road->GetRoadMarkLeftByS(GetS(), GetLaneId());
         data->road_mark_right = road->GetRoadMarkRightByS(GetS(), GetLaneId());
+
+        data->distance_to_lane_end_left = 1001.0;
+        data->distance_to_lane_end_ego = 1002.0;
+        data->distance_to_lane_end_right = 1003.0;
+
+        data->distance_to_next_exit = 1004.0;
+
+        data->distance_to_ramp_left  = 1005.0;
+        data->distance_to_ramp_ego   = 1006.0;
+        data->distance_to_ramp_right = 1007.0;
     }
 
     return ReturnCode::OK;
