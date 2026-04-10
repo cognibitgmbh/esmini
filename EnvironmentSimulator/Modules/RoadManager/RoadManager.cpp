@@ -2021,6 +2021,33 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
     
 }
 
+double DISTANCE_TO_LANE_END_MAX = 1000.0;
+
+double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
+{
+    double length_of_remaining_lane = this->GetLength() - s;
+
+    if (length_of_remaining_lane < DISTANCE_TO_LANE_END_MAX)
+    {
+        return length_of_remaining_lane;
+    }
+
+    LaneSection* lsec = GetLaneSectionByS(s, 0);
+
+    if (lsec == nullptr)
+    {
+        return DISTANCE_TO_LANE_END_MAX;
+    }
+
+    Lane* lane = lsec->GetLaneById(lane_id);
+    if (lane == nullptr)
+    {
+        return DISTANCE_TO_LANE_END_MAX;
+    }
+        
+    return 0.0;
+}
+
 LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
 {
     LaneSection* lsec = GetLaneSectionByS(s, 0);
@@ -11838,7 +11865,7 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         data->road_mark_right = road->GetRoadMarkRightByS(GetS(), GetLaneId());
 
         data->distance_to_lane_end_left = 1001.0;
-        data->distance_to_lane_end_ego = 1002.0;
+        data->distance_to_lane_end_ego = road->GetDistanceToLaneEndByS(GetS(), GetLaneId());
         data->distance_to_lane_end_right = 1003.0;
 
         data->distance_to_next_exit = 1004.0;

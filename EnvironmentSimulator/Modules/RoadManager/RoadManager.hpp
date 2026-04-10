@@ -2827,6 +2827,7 @@ namespace roadmanager
         Lane::LaneType  GetLaneTypeByS(double s, int lane_id) const;
         LaneRoadMark::RoadMarkType GetRoadMarkLeftByS(double s, int lane_id) const;
         LaneRoadMark::RoadMarkType GetRoadMarkRightByS(double s, int lane_id) const;
+        double GetDistanceToLaneEndByS(double s, int lane_id) const;
         Lane::Material *GetLaneMaterialByS(double s, int lane_id) const;
         double          GetSpeedByS(double s) const;
         RoadType        GetRoadTypeByS(double s) const;
