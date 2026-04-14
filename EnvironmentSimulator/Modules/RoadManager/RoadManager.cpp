@@ -2027,25 +2027,35 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
 {
     double length_of_remaining_lane = this->GetLength() - s;
 
+    RoadLink* road_link = this->GetLink(LinkType::SUCCESSOR);
+
+    Position* pos = new roadmanager::Position();
+    while (length_of_remaining_lane < DISTANCE_TO_LANE_END_MAX)
+    {
+        if (road_link == nullptr)
+        {
+            break;
+        }
+
+        id_t road_id = road_link->GetElementId();
+        Road* successor = pos->GetRoadById(road_id);
+
+        if (successor == nullptr) {
+            break;
+        }
+
+        length_of_remaining_lane += successor->GetLength();
+
+        road_link = successor->GetLink(LinkType::SUCCESSOR);
+    }
+
+    delete pos;
+
     if (length_of_remaining_lane < DISTANCE_TO_LANE_END_MAX)
     {
         return length_of_remaining_lane;
     }
-
-    LaneSection* lsec = GetLaneSectionByS(s, 0);
-
-    if (lsec == nullptr)
-    {
-        return DISTANCE_TO_LANE_END_MAX;
-    }
-
-    Lane* lane = lsec->GetLaneById(lane_id);
-    if (lane == nullptr)
-    {
-        return DISTANCE_TO_LANE_END_MAX;
-    }
-        
-    return 0.0;
+    return DISTANCE_TO_LANE_END_MAX;
 }
 
 LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
