@@ -81,6 +81,8 @@ static int GetRoadInfo(int index, float lookahead_distance, void* data, int look
         r_data->road_lane_info.road_mark_right = static_cast<int>(s_data.road_lane_info.road_mark_right);
         r_data->road_lane_info.roadId      = s_data.road_lane_info.roadId;
         r_data->road_lane_info.junctionId  = s_data.road_lane_info.junctionId;
+        r_data->road_lane_info.in_main_direction = s_data.road_lane_info.in_main_direction;
+
         r_data->road_lane_info.laneId      = s_data.road_lane_info.laneId;
         r_data->road_lane_info.laneOffset  = static_cast<float>(s_data.road_lane_info.laneOffset);
         r_data->road_lane_info.t           = static_cast<float>(s_data.road_lane_info.t);

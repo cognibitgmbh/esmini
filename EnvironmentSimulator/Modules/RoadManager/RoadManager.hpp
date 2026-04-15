@@ -2828,6 +2828,7 @@ namespace roadmanager
         LaneRoadMark::RoadMarkType GetRoadMarkLeftByS(double s, int lane_id) const;
         LaneRoadMark::RoadMarkType GetRoadMarkRightByS(double s, int lane_id) const;
         double GetDistanceToLaneEndByS(double s, int lane_id) const;
+        double GetDistanceToNextExitByS(double s, int lane_id) const;
         Lane::Material *GetLaneMaterialByS(double s, int lane_id) const;
         double          GetSpeedByS(double s) const;
         RoadType        GetRoadTypeByS(double s) const;
@@ -3578,6 +3579,9 @@ namespace roadmanager
 
         id_t           roadId;      // road ID
         id_t           junctionId;  // junction ID (-1 if not in a junction)
+        
+        bool           in_main_direction; // True, if probed in main direction of the road
+
         int            laneId;      // lane ID
         double         laneOffset;  // lane offset (lateral distance from lane center)
         double         s;           // s (longitudinal distance along reference line)
@@ -4353,6 +4357,11 @@ namespace roadmanager
         Retrieve the heading angle (radians) relative driving direction (lane sign considered)
         */
         double GetHRelativeDrivingDirection() const;
+
+        /**
+        Return, whether the probe position is in driving direction, with regard to the heading.
+        */
+        bool GetInMainDirection() const;
 
         /**
         Retrieve the relative heading angle (radians)

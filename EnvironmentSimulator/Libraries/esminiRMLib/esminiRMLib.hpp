@@ -59,6 +59,7 @@ typedef struct
     float          speed_limit;  // m/s
     id_t           roadId;       // target position, road ID
     id_t           junctionId;   // target position, junction ID. -1 if not in a junction.
+    bool           in_main_direction; // true, if probe call was in main direction.
     int            road_mark_left;
     int            road_mark_right;
     int            laneId;       // target position, lane ID

@@ -75,6 +75,8 @@ using namespace roadmanager;
 #define TUNNEL_HEIGHT              4.5
 #define MAX_ROAD_LEN_ERROR         0.1
 
+#define DISTANCE_TO_LANE_END_MAX 1000.0
+
 const char* object_type_str[] = {"barrier",   "bike",     "building",     "bus",          "car",           "crosswalk",  "gantry",
                                  "motorbike", "none",     "obstacle",     "parkingSpace", "patch",         "pedestrian", "pole",
                                  "railing",   "roadMark", "soundBarrier", "streetLamp",   "trafficIsland", "trailer",    "train",
@@ -2021,12 +2023,10 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
     
 }
 
-double DISTANCE_TO_LANE_END_MAX = 1000.0;
-
 double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
 {
     double length_of_remaining_lane = this->GetLength() - s;
-
+    
     id_t      previous_road_id = this->GetId();
     RoadLink* road_link = this->GetLink(LinkType::SUCCESSOR);
 
@@ -2079,6 +2079,14 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
     {
         return length_of_remaining_lane;
     }
+    return DISTANCE_TO_LANE_END_MAX;
+}
+
+double Road::GetDistanceToNextExitByS(double s, int lane_id) const
+{
+    // Go to the most right lane
+    // 
+
     return DISTANCE_TO_LANE_END_MAX;
 }
 
@@ -11027,6 +11035,11 @@ double Position::GetHRelativeDrivingDirection() const
     return GetAngleDifference(h_, GetDrivingDirection());
 }
 
+bool Position::GetInMainDirection() const
+{
+    return IsAngleForward(GetHRelativeDrivingDirection());
+}
+
 double Position::GetSpeedLimit() const
 {
     double speed_limit = 70 / 3.6;  // some default speed
@@ -11881,15 +11894,18 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
     data->laneOffset = GetOffset();
     data->roadId     = GetTrackId();
     data->junctionId = GetJunctionId();
+    data->in_main_direction = GetInMainDirection();
+    
     data->t          = GetT();
     data->s          = GetS();
+    data->speed_limit = GetSpeedLimit();
 
     // Then find out some additional properties of the lane at current s-value
     Road* road = GetRoadById(GetTrackId());
     if (road)
     {
         data->width       = road->GetLaneWidthByS(GetS(), GetLaneId());
-        data->speed_limit     = this->GetSpeedLimit();
+
         data->road_type   = road->GetRoadTypeByS(GetS());
         data->road_rule   = road->GetRule();
         Lane::Material* m = road->GetLaneMaterialByS(GetS(), GetLaneId());
@@ -11902,7 +11918,7 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         data->distance_to_lane_end_ego = road->GetDistanceToLaneEndByS(GetS(), GetLaneId());
         data->distance_to_lane_end_right = 1003.0;
 
-        data->distance_to_next_exit = 1004.0;
+        data->distance_to_next_exit = road->GetDistanceToNextExitByS(GetS(), GetLaneId());
 
         data->distance_to_ramp_left  = 1005.0;
         data->distance_to_ramp_ego   = 1006.0;
