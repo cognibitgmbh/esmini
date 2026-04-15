@@ -11889,7 +11889,7 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
     if (road)
     {
         data->width       = road->GetLaneWidthByS(GetS(), GetLaneId());
-        data->speed_limit = road->GetSpeedByS(GetS());
+        data->speed_limit     = this->GetSpeedLimit();
         data->road_type   = road->GetRoadTypeByS(GetS());
         data->road_rule   = road->GetRule();
         Lane::Material* m = road->GetLaneMaterialByS(GetS(), GetLaneId());
