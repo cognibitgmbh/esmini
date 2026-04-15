@@ -2027,6 +2027,7 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
 {
     double length_of_remaining_lane = this->GetLength() - s;
 
+    id_t      previous_road_id = this->GetId();
     RoadLink* road_link = this->GetLink(LinkType::SUCCESSOR);
 
     Position* pos = new roadmanager::Position();
@@ -2036,17 +2037,40 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
         {
             break;
         }
-
+        
+        
         id_t road_id = road_link->GetElementId();
-        Road* successor = pos->GetRoadById(road_id);
+        RoadLink::ElementType element_type = road_link->GetElementType();
 
-        if (successor == nullptr) {
-            break;
+        // JUNCTION
+        if (element_type == RoadLink::ElementType::ELEMENT_TYPE_JUNCTION) {
+
+            Junction* junction = Position::GetOpenDrive()->GetJunctionById(road_id);
+
+            id_t connecting_road_id = junction->GetConnectingRoadIdFromIncomingRoadId(previous_road_id, 0);
+            Road* connecting_road    = pos->GetRoadById(connecting_road_id);
+
+            length_of_remaining_lane += connecting_road->GetLength();
+
+            road_link = connecting_road->GetLink(LinkType::SUCCESSOR);
+
         }
 
-        length_of_remaining_lane += successor->GetLength();
+        // ROAD
+        else {            
+            Road* successor = pos->GetRoadById(road_id);
 
-        road_link = successor->GetLink(LinkType::SUCCESSOR);
+            if (successor == nullptr)
+            {
+                break;
+            }
+
+            length_of_remaining_lane += successor->GetLength();
+
+            road_link = successor->GetLink(LinkType::SUCCESSOR);
+        }
+
+        previous_road_id = road_id;
     }
 
     delete pos;
