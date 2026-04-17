@@ -971,6 +971,7 @@ namespace roadmanager
             return g_id_;
         }
 
+
         // Add Functions
         void AddLink(LaneLink *lane_link)
         {
@@ -1098,6 +1099,7 @@ namespace roadmanager
         double GetOuterOffset(double s, int lane_id) const;
         double GetInnerOffset(double s, int lane_id) const;
         double GetWidth(double s, int lane_id) const;
+        bool   GetOnExit() const;
 
         /**
         Get index of closest lane wrt given constraints
@@ -2834,6 +2836,8 @@ namespace roadmanager
         RoadType        GetRoadTypeByS(double s) const;
         bool            GetZAndPitchByS(double s, double *z_centerline, double *z_prim, double *z_primPrim, double *pitch, idx_t *index) const;
         bool            UpdateRollByS(double s, double *roadSuperElevationPrim, double *roll, idx_t *index) const;
+        Lane* GetRightMostLane(double s, int lane_id) const;
+        Road* GetSuccessor() const;
         unsigned int    GetNumberOfLaneSections() const
         {
             return static_cast<unsigned int>(lane_section_.size());

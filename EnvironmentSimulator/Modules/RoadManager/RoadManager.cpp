@@ -75,7 +75,7 @@ using namespace roadmanager;
 #define TUNNEL_HEIGHT              4.5
 #define MAX_ROAD_LEN_ERROR         0.1
 
-#define DISTANCE_TO_LANE_END_MAX 1000.0
+#define MAX_LANE_DISTANCE 1000.0
 
 const char* object_type_str[] = {"barrier",   "bike",     "building",     "bus",          "car",           "crosswalk",  "gantry",
                                  "motorbike", "none",     "obstacle",     "parkingSpace", "patch",         "pedestrian", "pole",
@@ -2031,7 +2031,7 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
     RoadLink* road_link = this->GetLink(LinkType::SUCCESSOR);
 
     Position* pos = new roadmanager::Position();
-    while (length_of_remaining_lane < DISTANCE_TO_LANE_END_MAX)
+    while (length_of_remaining_lane < MAX_LANE_DISTANCE)
     {
         if (road_link == nullptr)
         {
@@ -2075,19 +2075,112 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
 
     delete pos;
 
-    if (length_of_remaining_lane < DISTANCE_TO_LANE_END_MAX)
+    if (length_of_remaining_lane < MAX_LANE_DISTANCE)
     {
         return length_of_remaining_lane;
     }
-    return DISTANCE_TO_LANE_END_MAX;
+    return MAX_LANE_DISTANCE;
 }
 
 double Road::GetDistanceToNextExitByS(double s, int lane_id) const
 {
-    // Go to the most right lane
-    // 
+    double distance_to_next_exit = 0.0;
+    bool first_run = true;
+    bool on_exit = false;
+    const Road* current_road = this;
+    int lane_section_index = GetLaneSectionIdxByS(s, 0);
 
-    return DISTANCE_TO_LANE_END_MAX;
+    while (current_road != nullptr 
+        && (on_exit == false && distance_to_next_exit < MAX_LANE_DISTANCE))
+    {
+        LaneSection* lane_section = GetLaneSectionByIdx(lane_section_index);
+
+        if (lane_section == nullptr) {    
+            current_road = current_road->GetSuccessor();
+            
+            if (current_road == nullptr)
+            {
+                break;
+            }
+
+            lane_section_index = 0;
+            lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
+
+        }
+
+        lane_section_index += 1;
+
+        on_exit = lane_section->GetOnExit();
+
+        if (on_exit == false)
+        {
+            if (first_run)
+            {
+                distance_to_next_exit += lane_section->GetLength() - s;
+            }
+            else
+            {
+                distance_to_next_exit += lane_section->GetLength();
+            }
+        }
+
+        first_run = false;
+    }
+
+    return distance_to_next_exit;
+}
+
+Lane* Road::GetRightMostLane(double s, int lane_id) const
+{
+    LaneSection* lsec = GetLaneSectionByS(s, 0);
+
+    if (lsec == nullptr)
+    {
+        return nullptr;
+    }
+
+    unsigned int number_of_driving_lanes = lsec->GetNumberOfDrivingLanesSide(lane_id);
+    int          rightmost_lane_id       = SIGN(lane_id) * (abs(lane_id) + number_of_driving_lanes - 1);
+    Lane*        right_most_lane         = lsec->GetLaneById(rightmost_lane_id);
+
+    return right_most_lane;
+}
+
+Road* Road::GetSuccessor() const
+{
+    Road* result = nullptr;
+
+    RoadLink* road_link        = GetLink(LinkType::SUCCESSOR);
+    if (road_link == nullptr) {
+        return result;
+    }
+
+
+    Position* pos = new roadmanager::Position();
+    id_t                  road_id      = road_link->GetElementId();
+    RoadLink::ElementType element_type = road_link->GetElementType();
+
+      // JUNCTION
+    if (element_type == RoadLink::ElementType::ELEMENT_TYPE_JUNCTION)
+    {
+
+        Junction* junction = Position::GetOpenDrive()->GetJunctionById(road_id);
+
+        id_t  connecting_road_id = junction->GetConnectingRoadIdFromIncomingRoadId(road_id, 0);
+        Road* connecting_road    = pos->GetRoadById(connecting_road_id);
+        result = connecting_road;
+    }
+
+    // ROAD
+    else
+    {
+        Road* successor = pos->GetRoadById(road_id);
+        result = successor;
+    }
+
+    delete pos;
+
+    return result;
 }
 
 LaneRoadMark::RoadMarkType Road::GetRoadMarkRightByS(double s, int lane_id) const
@@ -2231,6 +2324,19 @@ void LaneSection::Print() const
     {
         lane_[i]->Print();
     }
+}
+
+bool LaneSection::GetOnExit() const
+{
+    for (size_t i = 0; i < lane_.size(); i++)
+    {
+        Lane::LaneType lane_type = lane_[i]->GetLaneType();
+        
+        if (lane_type == Lane::LaneType::LANE_TYPE_EXIT) {
+            return true;
+        }
+    }
+    return false;
 }
 
 Lane* LaneSection::GetLaneByIdx(unsigned int idx) const
