@@ -2093,7 +2093,7 @@ double Road::GetDistanceToNextExitByS(double s, int lane_id) const
     while (current_road != nullptr 
         && (on_exit == false && distance_to_next_exit < MAX_LANE_DISTANCE))
     {
-        LaneSection* lane_section = GetLaneSectionByIdx(lane_section_index);
+        LaneSection* lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
 
         if (lane_section == nullptr) {    
             current_road = current_road->GetSuccessor();
@@ -2107,27 +2107,35 @@ double Road::GetDistanceToNextExitByS(double s, int lane_id) const
             lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
 
         }
+        LOG_INFO("GetDistanceToNextExitByS s = {}, current road id = {}, lane_section_index = {}, lane_section s = {}, length = {}",
+                 s,
+                 current_road->GetId(),
+                 lane_section_index,
+                 lane_section->GetS(),
+                 lane_section->GetLength());
 
         lane_section_index += 1;
 
-        on_exit = lane_section->GetOnExit();
+        on_exit = lane_section->GetHasLaneOnExit(lane_id);
+        LOG_INFO("on exit = {}", on_exit);
 
         if (on_exit == false)
         {
             if (first_run)
             {
-                distance_to_next_exit += lane_section->GetLength() - s;
+                distance_to_next_exit += lane_section->GetLength() - (s - lane_section->GetS());
             }
             else
             {
                 distance_to_next_exit += lane_section->GetLength();
             }
         }
+        LOG_INFO("distance_to_lane_end = {}", distance_to_next_exit);
 
         first_run = false;
     }
 
-    return distance_to_next_exit;
+    return min(distance_to_next_exit, MAX_LANE_DISTANCE);
 }
 
 Lane* Road::GetRightMostLane(double s, int lane_id) const
@@ -2152,6 +2160,7 @@ Road* Road::GetSuccessor() const
 
     RoadLink* road_link        = GetLink(LinkType::SUCCESSOR);
     if (road_link == nullptr) {
+        LOG_WARN("No successor for road {}", GetId());
         return result;
     }
 
@@ -2326,16 +2335,21 @@ void LaneSection::Print() const
     }
 }
 
-bool LaneSection::GetOnExit() const
+bool LaneSection::GetHasLaneOnExit(int side) const
 {
     for (size_t i = 0; i < lane_.size(); i++)
     {
-        Lane::LaneType lane_type = lane_[i]->GetLaneType();
-        
-        if (lane_type == Lane::LaneType::LANE_TYPE_EXIT) {
-            return true;
+        if (SIGN(lane_[i]->GetId()) == SIGN(side))
+        {
+            LOG_INFO("lane {}, type = {}", lane_[i]->GetId(), lane_[i]->GetLaneType());
+
+            if (lane_[i]->IsType(Lane::LaneType::LANE_TYPE_EXIT))
+            {
+                return true;
+            }
         }
     }
+
     return false;
 }
 

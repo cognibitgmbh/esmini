@@ -1099,7 +1099,7 @@ namespace roadmanager
         double GetOuterOffset(double s, int lane_id) const;
         double GetInnerOffset(double s, int lane_id) const;
         double GetWidth(double s, int lane_id) const;
-        bool   GetOnExit() const;
+        bool   GetHasLaneOnExit(int lane_id) const;
 
         /**
         Get index of closest lane wrt given constraints
