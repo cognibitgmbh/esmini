@@ -2135,7 +2135,13 @@ double Road::GetDistanceToNextExitByS(double s, int lane_id) const
         first_run = false;
     }
 
-    return min(distance_to_next_exit, MAX_LANE_DISTANCE);
+    if (on_exit)
+    {
+        return min(distance_to_next_exit, MAX_LANE_DISTANCE);
+    }
+    else {
+        return MAX_LANE_DISTANCE;
+    }    
 }
 
 Lane* Road::GetRightMostLane(double s, int lane_id) const
