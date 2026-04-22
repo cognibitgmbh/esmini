@@ -1099,7 +1099,7 @@ namespace roadmanager
         double GetOuterOffset(double s, int lane_id) const;
         double GetInnerOffset(double s, int lane_id) const;
         double GetWidth(double s, int lane_id) const;
-        bool   GetHasLaneOnExit(int lane_id) const;
+        bool   GetHasLaneOnLaneType(int lane_id, Lane::LaneType lane_type) const;
 
         /**
         Get index of closest lane wrt given constraints
@@ -2830,6 +2830,7 @@ namespace roadmanager
         LaneRoadMark::RoadMarkType GetRoadMarkLeftByS(double s, int lane_id) const;
         LaneRoadMark::RoadMarkType GetRoadMarkRightByS(double s, int lane_id) const;
         double GetDistanceToLaneEndByS(double s, int lane_id) const;
+        double GetDistanceToRampByS(double s, int lane_id) const;
         double GetDistanceToNextExitByS(double s, int lane_id) const;
         Lane::Material *GetLaneMaterialByS(double s, int lane_id) const;
         double          GetSpeedByS(double s) const;

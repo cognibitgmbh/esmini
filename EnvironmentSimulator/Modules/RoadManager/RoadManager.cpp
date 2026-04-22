@@ -2082,6 +2082,59 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
     return MAX_LANE_DISTANCE;
 }
 
+
+double Road::GetDistanceToRampByS(double s, int lane_id) const
+{
+    if (GetLaneTypeByS(s, lane_id) != Lane::LaneType::LANE_TYPE_EXIT) {
+        return MAX_LANE_DISTANCE;
+    }
+
+    const Road* current_road     = this;
+    int         lane_section_index = GetLaneSectionIdxByS(s, 0);
+    bool        on_off_ramp        = false;
+    bool        first_run          = true;
+
+    double distance_to_ramp = 0.0;
+
+    while (current_road != nullptr && (on_off_ramp == false && distance_to_ramp < MAX_LANE_DISTANCE))
+    {
+        LaneSection* lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
+
+        if (lane_section == nullptr)
+        {
+            current_road = current_road->GetSuccessor();
+
+            if (current_road == nullptr)
+            {
+                break;
+            }
+
+            lane_section_index = 0;
+            lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
+        }
+
+        lane_section_index += 1;
+
+        on_off_ramp = lane_section->GetHasLaneOnLaneType(lane_id, Lane::LaneType::LANE_TYPE_OFF_RAMP);
+
+        if (on_off_ramp == false)
+        {
+            if (first_run)
+            {
+                distance_to_ramp += lane_section->GetLength() - (s - lane_section->GetS());
+            }
+            else
+            {
+                distance_to_ramp += lane_section->GetLength();
+            }
+        }
+
+        first_run = false;
+    }
+
+    return distance_to_ramp;
+}
+
 double Road::GetDistanceToNextExitByS(double s, int lane_id) const
 {
     double distance_to_next_exit = 0.0;
@@ -2107,17 +2160,10 @@ double Road::GetDistanceToNextExitByS(double s, int lane_id) const
             lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
 
         }
-        LOG_INFO("GetDistanceToNextExitByS s = {}, current road id = {}, lane_section_index = {}, lane_section s = {}, length = {}",
-                 s,
-                 current_road->GetId(),
-                 lane_section_index,
-                 lane_section->GetS(),
-                 lane_section->GetLength());
 
         lane_section_index += 1;
 
-        on_exit = lane_section->GetHasLaneOnExit(lane_id);
-        LOG_INFO("on exit = {}", on_exit);
+        on_exit = lane_section->GetHasLaneOnLaneType(lane_id, Lane::LaneType::LANE_TYPE_EXIT);
 
         if (on_exit == false)
         {
@@ -2130,7 +2176,6 @@ double Road::GetDistanceToNextExitByS(double s, int lane_id) const
                 distance_to_next_exit += lane_section->GetLength();
             }
         }
-        LOG_INFO("distance_to_lane_end = {}", distance_to_next_exit);
 
         first_run = false;
     }
@@ -2341,15 +2386,13 @@ void LaneSection::Print() const
     }
 }
 
-bool LaneSection::GetHasLaneOnExit(int side) const
+bool LaneSection::GetHasLaneOnLaneType(int side, Lane::LaneType lane_type) const
 {
     for (size_t i = 0; i < lane_.size(); i++)
     {
         if (SIGN(lane_[i]->GetId()) == SIGN(side))
         {
-            LOG_INFO("lane {}, type = {}", lane_[i]->GetId(), lane_[i]->GetLaneType());
-
-            if (lane_[i]->IsType(Lane::LaneType::LANE_TYPE_EXIT))
+            if (lane_[i]->IsType(lane_type))
             {
                 return true;
             }
@@ -12040,15 +12083,19 @@ Position::ReturnCode Position::GetRoadLaneInfo(RoadLaneInfo* data) const
         data->road_mark_left = road->GetRoadMarkLeftByS(GetS(), GetLaneId());
         data->road_mark_right = road->GetRoadMarkRightByS(GetS(), GetLaneId());
 
-        data->distance_to_lane_end_left = 1001.0;
+        int lane_id_left = SIGN(GetLaneId()) * (abs(GetLaneId()) - 1);
+        int lane_id_right = SIGN(GetLaneId()) * (abs(GetLaneId()) + 1);
+
+        data->distance_to_lane_end_left  = road->GetDistanceToLaneEndByS(GetS(), lane_id_left);
         data->distance_to_lane_end_ego = road->GetDistanceToLaneEndByS(GetS(), GetLaneId());
-        data->distance_to_lane_end_right = 1003.0;
+        data->distance_to_lane_end_right = road->GetDistanceToLaneEndByS(GetS(), lane_id_right);
 
         data->distance_to_next_exit = road->GetDistanceToNextExitByS(GetS(), GetLaneId());
 
-        data->distance_to_ramp_left  = 1005.0;
-        data->distance_to_ramp_ego   = 1006.0;
-        data->distance_to_ramp_right = 1007.0;
+        data->distance_to_ramp_left  = road->GetDistanceToRampByS(GetS(), lane_id_left);
+        data->distance_to_ramp_ego   = road->GetDistanceToRampByS(GetS(), GetLaneId());
+        data->distance_to_ramp_right = road->GetDistanceToRampByS(GetS(), lane_id_right);
+        
     }
 
     return ReturnCode::OK;
