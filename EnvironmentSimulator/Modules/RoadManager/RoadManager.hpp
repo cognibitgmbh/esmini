@@ -2800,7 +2800,7 @@ namespace roadmanager
         {
             return GetLaneSectionByIdx(GetLaneSectionIdxByS(s, start_at));
         }
-
+        Lane *GetLaneByS(double s, int lane_id) const;
         /**
         Get lateral position of lane center, from road reference lane (lane id=0)
         Example: If lane id 1 is 5 m wide and lane id 2 is 4 m wide, then
@@ -2926,6 +2926,7 @@ namespace roadmanager
         Lane        *GetDrivingLaneSideByIdx(double s, int side, idx_t idx) const;
         Lane        *GetDrivingLaneById(double s, int id) const;
         unsigned int GetNumberOfDrivingLanesSide(double s, int side) const;  // side = -1 right, 1 left
+        std::pair<const Road *, Lane *> GetSuccessorLane(double s, int lane_id) const;
 
         /**
                 Given a lane id, get connected lane id at another longitudinal location at the same road

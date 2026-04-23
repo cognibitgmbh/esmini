@@ -2025,59 +2025,60 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
 
 double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
 {
-    double length_of_remaining_lane = this->GetLength() - s;
+    //LOG_INFO("GetDistanceToLaneEndByS {} {}", s, lane_id);
+
+    const Road* current_road = this;
+
+    int lane_section_index = current_road->GetLaneSectionIdxByS(s, 0);
+    LaneSection* lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
+
+
+    double distance_to_lane_end = lane_section->GetLength() - (s - lane_section->GetS());
+
+    // next_lane points to the next successor lane. If the lane does not have a successor, the loop stops.
+    Lane* current_lane = lane_section->GetLaneById(lane_id);
+    if (current_lane == nullptr) {
+        return distance_to_lane_end;
+    }
+
+    LaneLink* next_lane = current_lane->GetLink(LinkType::SUCCESSOR);
     
-    id_t      previous_road_id = this->GetId();
-    RoadLink* road_link = this->GetLink(LinkType::SUCCESSOR);
-
-    Position* pos = new roadmanager::Position();
-    while (length_of_remaining_lane < MAX_LANE_DISTANCE)
+    while (current_road != nullptr && next_lane != nullptr && (distance_to_lane_end < MAX_LANE_DISTANCE))
     {
-        if (road_link == nullptr)
-        {
-            break;
-        }
-        
-        
-        id_t road_id = road_link->GetElementId();
-        RoadLink::ElementType element_type = road_link->GetElementType();
+        lane_section_index += 1;
 
-        // JUNCTION
-        if (element_type == RoadLink::ElementType::ELEMENT_TYPE_JUNCTION) {
+        //LOG_INFO("current_road = {}, lane_section_index = {}, distance = {}", current_road->GetId(), lane_section_index, distance_to_lane_end);
 
-            Junction* junction = Position::GetOpenDrive()->GetJunctionById(road_id);
+        lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
 
-            id_t connecting_road_id = junction->GetConnectingRoadIdFromIncomingRoadId(previous_road_id, 0);
-            Road* connecting_road    = pos->GetRoadById(connecting_road_id);
+        if (lane_section == nullptr) {
+            current_road = current_road->GetSuccessor();
 
-            length_of_remaining_lane += connecting_road->GetLength();
-
-            road_link = connecting_road->GetLink(LinkType::SUCCESSOR);
-
-        }
-
-        // ROAD
-        else {            
-            Road* successor = pos->GetRoadById(road_id);
-
-            if (successor == nullptr)
+            if (current_road == nullptr)
             {
                 break;
             }
+            lane_section_index = 0;
+            lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);    
 
-            length_of_remaining_lane += successor->GetLength();
-
-            road_link = successor->GetLink(LinkType::SUCCESSOR);
         }
 
-        previous_road_id = road_id;
+        distance_to_lane_end += lane_section->GetLength();
+        current_lane = lane_section->GetLaneById(lane_id);
+        if (current_lane)
+        {
+            next_lane = current_lane->GetLink(LinkType::SUCCESSOR);
+        }
+        else {
+            next_lane = nullptr;
+        }
+
+
     }
 
-    delete pos;
-
-    if (length_of_remaining_lane < MAX_LANE_DISTANCE)
+    if (distance_to_lane_end < MAX_LANE_DISTANCE)
     {
-        return length_of_remaining_lane;
+        return distance_to_lane_end;
     }
     return MAX_LANE_DISTANCE;
 }
@@ -2208,10 +2209,8 @@ Lane* Road::GetRightMostLane(double s, int lane_id) const
 Road* Road::GetSuccessor() const
 {
     Road* result = nullptr;
-
     RoadLink* road_link        = GetLink(LinkType::SUCCESSOR);
     if (road_link == nullptr) {
-        LOG_WARN("No successor for road {}", GetId());
         return result;
     }
 
@@ -2226,7 +2225,7 @@ Road* Road::GetSuccessor() const
 
         Junction* junction = Position::GetOpenDrive()->GetJunctionById(road_id);
 
-        id_t  connecting_road_id = junction->GetConnectingRoadIdFromIncomingRoadId(road_id, 0);
+        id_t  connecting_road_id = junction->GetConnectingRoadIdFromIncomingRoadId(this->GetId(), 0);
         Road* connecting_road    = pos->GetRoadById(connecting_road_id);
         result = connecting_road;
     }
@@ -2341,6 +2340,44 @@ Road::RoadType Road::GetRoadTypeByS(double s) const
 
     // No type entries, fall back to default road definition
     return Road::RoadType::ROADTYPE_UNKNOWN;
+}
+
+Lane* Road::GetLaneByS(double s, int lane_id) const
+{
+    LaneSection* lane_section = this -> GetLaneSectionByS(s, 0);
+    if (lane_section) {
+        Lane* lane = lane_section->GetLaneById(lane_id);
+
+        return lane;
+    }
+
+    return nullptr;
+}
+
+std::pair<const Road*, Lane*> Road::GetSuccessorLane(double s, int lane_id) const
+{
+    const Road* current_road = this;
+    int          lane_section_index = GetLaneSectionIdxByS(s, 0);
+    LaneSection* lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
+
+
+    Lane* current_lane = lane_section->GetLaneById(lane_id);
+    LaneLink* successor_link = current_lane->GetLink(LinkType::SUCCESSOR);
+
+    LaneSection* next_lane_section = current_road->GetLaneSectionByIdx(lane_section_index + 1);
+    if (next_lane_section == nullptr) {
+        current_road = current_road->GetSuccessor();
+        next_lane_section = current_road->GetLaneSectionByIdx(0);
+    
+    }
+
+    if (next_lane_section)
+    {
+        Lane* successor_lane = next_lane_section->GetLaneById(successor_link->GetId());
+
+        return pair(current_road, successor_lane);    
+    }
+    return pair(nullptr, nullptr);
 }
 
 Lane::Material* Road::GetLaneMaterialByS(double s, int lane_id) const
