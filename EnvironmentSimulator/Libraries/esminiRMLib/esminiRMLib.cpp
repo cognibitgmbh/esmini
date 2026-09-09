@@ -1001,6 +1001,7 @@ extern "C"
                 road_sign->length      = static_cast<float>(s->GetLength());
                 road_sign->height      = static_cast<float>(s->GetHeight());
                 road_sign->width       = static_cast<float>(s->GetWidth());
+                road_sign->dynamic     = s->IsDynamic() ? 1 : 0;
 
                 return 0;
             }
@@ -1044,6 +1045,23 @@ extern "C"
                     return 0;
                 }
             }
+        }
+
+        return -1;
+    }
+
+    RM_DLL_API int RM_GetRoadJunctionId(id_t road_id)
+    {
+        if (odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(road_id);
+
+        if (road != NULL)
+        {
+            return static_cast<int>(road->GetJunction());
         }
 
         return -1;

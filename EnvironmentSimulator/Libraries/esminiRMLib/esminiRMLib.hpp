@@ -112,6 +112,7 @@ typedef struct
     float       length;       // length as specified in OpenDRIVE
     float       height;       // height as specified in OpenDRIVE
     float       width;        // width as specified in OpenDRIVE
+    int         dynamic;      // 1 if sign is a dynamic signal (e.g. traffic light), 0 if static
 } RM_RoadSign;
 
 typedef struct
@@ -624,6 +625,13 @@ extern "C"
     @return 0 if successful, -1 if not
     */
     RM_DLL_API int RM_GetRoadSignValidityRecord(id_t road_id, unsigned int signIndex, unsigned int validityIndex, RM_RoadObjValidity* validity);
+
+    /**
+    Get the junction ID that specified road belongs to, if it's a junction (connecting) road
+    @param road_id The road to check
+    @return Junction ID, -1 if road is not part of a junction or on error
+    */
+    RM_DLL_API int RM_GetRoadJunctionId(id_t road_id);
 
     /**
             Get the xodr road file georeference
