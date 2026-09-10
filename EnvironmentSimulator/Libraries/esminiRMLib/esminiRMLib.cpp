@@ -939,9 +939,10 @@ extern "C"
         PositionDiff diff;
         if (position[static_cast<unsigned int>(handleA)].Delta(&position[static_cast<unsigned int>(handleB)], diff) == true)
         {
-            pos_diff->ds      = static_cast<float>(diff.ds);
-            pos_diff->dt      = static_cast<float>(diff.dt);
-            pos_diff->dLaneId = diff.dLaneId;
+            pos_diff->ds         = static_cast<float>(diff.ds);
+            pos_diff->dt         = static_cast<float>(diff.dt);
+            pos_diff->dLaneId    = diff.dLaneId;
+            pos_diff->dDirection = diff.dDirection ? 1 : 0;
 
             return 0;
         }

@@ -91,9 +91,10 @@ typedef struct
 
 typedef struct
 {
-    float ds;       // delta s (longitudinal distance)
-    float dt;       // delta t (lateral distance)
-    int   dLaneId;  // delta laneId (increasing left and decreasing to the right)
+    float ds;         // delta s (longitudinal distance)
+    float dt;         // delta t (lateral distance)
+    int   dLaneId;    // delta laneId (increasing left and decreasing to the right)
+    int   dDirection; // 1 if the two positions are heading in the same direction, 0 if opposite
 } RM_PositionDiff;
 
 typedef struct
