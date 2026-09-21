@@ -2142,6 +2142,14 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
             if (next_road != nullptr)
             {
                 next_lane_id = current_road->GetConnectingLaneId(road_link, current_lane_id, next_road->GetId());
+
+                // Same reasoning as the junction case above: a plain road-to-road link can equally
+                // attach at the neighbor's s=length end (contactPoint="end") rather than its s=0 start
+                // - e.g. two roads sharing a physical point but each keeping their own, independently
+                // authored s-direction there. Assuming s=0/successor unconditionally (as this did
+                // before) entered the next road at the wrong end whenever that happened.
+                forward   = road_link->GetContactPointType() != ContactPointType::CONTACT_POINT_END;
+                link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
             }
         }
 
@@ -2172,53 +2180,96 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
 }
 
 
+// Shared by GetDistanceToRampByS() and GetDistanceToNextExitByS(): walk lane sections/roads in the
+// direction this lane actually drives (see GetDistanceToLaneEndByS() for the raw-lane-id-sign
+// convention and why always walking the successor side, regardless of lane_id, silently measured
+// distance backwards for any lane driving against the road's reference line - the same bug applied
+// here). Like the pre-existing code this replaces, this stays lane-agnostic once it crosses into a
+// junction (GetSuccessor()/GetPredecessor() take the junction's first connection for the road,
+// regardless of lane id) - only a plain road-to-road link's real contactPoint is used to tell which
+// end of the next road was just entered, and thus which direction continues driving forward from
+// there (a junction connecting road picked this way doesn't expose its own contact point here, so
+// CONTACT_POINT_START, the overwhelmingly common authoring, is assumed for it).
+static bool AdvanceToNextLaneSectionInDrivingDirection(const Road*&  current_road,
+                                                        int&          lane_section_index,
+                                                        LaneSection*& lane_section,
+                                                        bool&         forward,
+                                                        LinkType&     link_type)
+{
+    int next_lane_section_index = lane_section_index + (forward ? 1 : -1);
+    LaneSection* next_lane_section = (next_lane_section_index >= 0)
+        ? current_road->GetLaneSectionByIdx(static_cast<unsigned int>(next_lane_section_index))
+        : nullptr;
+
+    if (next_lane_section == nullptr)
+    {
+        RoadLink* road_link = current_road->GetLink(link_type);
+        if (road_link == nullptr)
+        {
+            return false;
+        }
+
+        Road* next_road = forward ? current_road->GetSuccessor() : current_road->GetPredecessor();
+        if (next_road == nullptr)
+        {
+            return false;
+        }
+
+        ContactPointType contact_point = ContactPointType::CONTACT_POINT_START;
+        if (road_link->GetElementType() != RoadLink::ELEMENT_TYPE_JUNCTION)
+        {
+            contact_point = road_link->GetContactPointType();
+        }
+
+        current_road = next_road;
+        forward      = contact_point != ContactPointType::CONTACT_POINT_END;
+        link_type    = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
+
+        next_lane_section_index = forward ? 0 : static_cast<int>(current_road->GetNumberOfLaneSections()) - 1;
+        next_lane_section = (next_lane_section_index >= 0)
+            ? current_road->GetLaneSectionByIdx(static_cast<unsigned int>(next_lane_section_index))
+            : nullptr;
+        if (next_lane_section == nullptr)
+        {
+            return false;
+        }
+    }
+
+    lane_section_index = next_lane_section_index;
+    lane_section        = next_lane_section;
+    return true;
+}
+
 double Road::GetDistanceToRampByS(double s, int lane_id) const
 {
     if (GetLaneTypeByS(s, lane_id) != Lane::LaneType::LANE_TYPE_EXIT) {
         return MAX_LANE_DISTANCE;
     }
 
-    const Road* current_road     = this;
-    int         lane_section_index = GetLaneSectionIdxByS(s, 0);
-    bool        on_off_ramp        = false;
-    bool        first_run          = true;
+    bool     forward   = lane_id < 0;
+    LinkType link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
 
-    double distance_to_ramp = 0.0;
+    const Road*  current_road     = this;
+    int          lane_section_index = current_road->GetLaneSectionIdxByS(s, 0);
+    LaneSection* lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
 
-    while (current_road != nullptr && (on_off_ramp == false && distance_to_ramp < MAX_LANE_DISTANCE))
+    bool on_off_ramp = lane_section->GetHasLaneOnLaneType(lane_id, Lane::LaneType::LANE_TYPE_OFF_RAMP);
+    double distance_to_ramp = on_off_ramp
+        ? 0.0
+        : (forward ? lane_section->GetLength() - (s - lane_section->GetS()) : (s - lane_section->GetS()));
+
+    while (!on_off_ramp && current_road != nullptr && distance_to_ramp < MAX_LANE_DISTANCE)
     {
-        LaneSection* lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
-
-        if (lane_section == nullptr)
+        if (!AdvanceToNextLaneSectionInDrivingDirection(current_road, lane_section_index, lane_section, forward, link_type))
         {
-            current_road = current_road->GetSuccessor();
-
-            if (current_road == nullptr)
-            {
-                break;
-            }
-
-            lane_section_index = 0;
-            lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
+            break;
         }
-
-        lane_section_index += 1;
 
         on_off_ramp = lane_section->GetHasLaneOnLaneType(lane_id, Lane::LaneType::LANE_TYPE_OFF_RAMP);
-
-        if (on_off_ramp == false)
+        if (!on_off_ramp)
         {
-            if (first_run)
-            {
-                distance_to_ramp += lane_section->GetLength() - (s - lane_section->GetS());
-            }
-            else
-            {
-                distance_to_ramp += lane_section->GetLength();
-            }
+            distance_to_ramp += lane_section->GetLength();
         }
-
-        first_run = false;
     }
 
     return distance_to_ramp;
@@ -2226,47 +2277,30 @@ double Road::GetDistanceToRampByS(double s, int lane_id) const
 
 double Road::GetDistanceToNextExitByS(double s, int lane_id) const
 {
-    double distance_to_next_exit = 0.0;
-    bool first_run = true;
-    bool on_exit = false;
-    const Road* current_road = this;
-    int lane_section_index = GetLaneSectionIdxByS(s, 0);
+    bool     forward   = lane_id < 0;
+    LinkType link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
 
-    while (current_road != nullptr 
-        && (on_exit == false && distance_to_next_exit < MAX_LANE_DISTANCE))
+    const Road*  current_road     = this;
+    int          lane_section_index = current_road->GetLaneSectionIdxByS(s, 0);
+    LaneSection* lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
+
+    bool on_exit = lane_section->GetHasLaneOnLaneType(lane_id, Lane::LaneType::LANE_TYPE_EXIT);
+    double distance_to_next_exit = on_exit
+        ? 0.0
+        : (forward ? lane_section->GetLength() - (s - lane_section->GetS()) : (s - lane_section->GetS()));
+
+    while (!on_exit && current_road != nullptr && distance_to_next_exit < MAX_LANE_DISTANCE)
     {
-        LaneSection* lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
-
-        if (lane_section == nullptr) {    
-            current_road = current_road->GetSuccessor();
-            
-            if (current_road == nullptr)
-            {
-                break;
-            }
-
-            lane_section_index = 0;
-            lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
-
+        if (!AdvanceToNextLaneSectionInDrivingDirection(current_road, lane_section_index, lane_section, forward, link_type))
+        {
+            break;
         }
-
-        lane_section_index += 1;
 
         on_exit = lane_section->GetHasLaneOnLaneType(lane_id, Lane::LaneType::LANE_TYPE_EXIT);
-
-        if (on_exit == false)
+        if (!on_exit)
         {
-            if (first_run)
-            {
-                distance_to_next_exit += lane_section->GetLength() - (s - lane_section->GetS());
-            }
-            else
-            {
-                distance_to_next_exit += lane_section->GetLength();
-            }
+            distance_to_next_exit += lane_section->GetLength();
         }
-
-        first_run = false;
     }
 
     if (on_exit)
@@ -2275,7 +2309,7 @@ double Road::GetDistanceToNextExitByS(double s, int lane_id) const
     }
     else {
         return MAX_LANE_DISTANCE;
-    }    
+    }
 }
 
 Lane* Road::GetRightMostLane(double s, int lane_id) const
