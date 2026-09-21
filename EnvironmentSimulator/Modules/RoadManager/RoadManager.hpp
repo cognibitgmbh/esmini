@@ -2839,6 +2839,7 @@ namespace roadmanager
         bool            UpdateRollByS(double s, double *roadSuperElevationPrim, double *roll, idx_t *index) const;
         Lane* GetRightMostLane(double s, int lane_id) const;
         Road* GetSuccessor() const;
+        Road* GetPredecessor() const;
         unsigned int    GetNumberOfLaneSections() const
         {
             return static_cast<unsigned int>(lane_section_.size());

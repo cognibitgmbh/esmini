@@ -2027,53 +2027,141 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
 {
     //LOG_INFO("GetDistanceToLaneEndByS {} {}", s, lane_id);
 
+    // A lane with a negative (raw OpenDRIVE) id drives in the direction of increasing s (the road's
+    // own reference-line/main direction), so "ahead" for it is the successor side. A lane with a
+    // positive id drives against the reference line (decreasing s), so "ahead" for it is the
+    // predecessor side. Walking the wrong side here previously made this measure distance in the
+    // driving-backwards direction for every lane on the "against reference direction" side of the
+    // road, silently giving nonsense distances instead of following the road network the car is
+    // actually going to drive along - see the u-turn heading bug this mirrors, fixed via the same
+    // pi-correction/raw-lane-id convention in EsminiRoadManager.get_road_heading() (cognibot repo).
+    bool forward = lane_id < 0;
+    LinkType link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
+
     const Road* current_road = this;
+    int         current_lane_id = lane_id;
 
     int lane_section_index = current_road->GetLaneSectionIdxByS(s, 0);
     LaneSection* lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
 
 
-    double distance_to_lane_end = lane_section->GetLength() - (s - lane_section->GetS());
+    double distance_to_lane_end = forward
+        ? lane_section->GetLength() - (s - lane_section->GetS())
+        : (s - lane_section->GetS());
 
-    // next_lane points to the next successor lane. If the lane does not have a successor, the loop stops.
-    Lane* current_lane = lane_section->GetLaneById(lane_id);
+    Lane* current_lane = lane_section->GetLaneById(current_lane_id);
     if (current_lane == nullptr) {
         return distance_to_lane_end;
     }
 
-    LaneLink* next_lane = current_lane->GetLink(LinkType::SUCCESSOR);
-    
-    while (current_road != nullptr && next_lane != nullptr && (distance_to_lane_end < MAX_LANE_DISTANCE))
+    while (current_road != nullptr && distance_to_lane_end < MAX_LANE_DISTANCE)
     {
-        lane_section_index += 1;
-
         //LOG_INFO("current_road = {}, lane_section_index = {}, distance = {}", current_road->GetId(), lane_section_index, distance_to_lane_end);
 
-        lane_section = current_road->GetLaneSectionByIdx(lane_section_index);
+        int next_lane_section_index = lane_section_index + (forward ? 1 : -1);
+        LaneSection* next_lane_section = (next_lane_section_index >= 0)
+            ? current_road->GetLaneSectionByIdx(static_cast<unsigned int>(next_lane_section_index))
+            : nullptr;
 
-        if (lane_section == nullptr) {
-            current_road = current_road->GetSuccessor();
-
-            if (current_road == nullptr)
+        if (next_lane_section != nullptr)
+        {
+            // Still within the same road: follow the lane's own link. This can rename the lane id
+            // between sections (e.g. an exit/off-ramp lane peeling off changes id as the section's
+            // lane count changes) - unlike a junction boundary, a plain in-road lane-section boundary
+            // does carry this per-lane <link> tag, so it must be used here instead of assuming
+            // current_lane_id stays the same (that broke off-ramp lanes: they legitimately renumber
+            // mid-road, so the "same id" assumption made this stop short at the renumbering point).
+            LaneLink* lane_link = current_lane->GetLink(link_type);
+            Lane*     next_lane = (lane_link != nullptr) ? next_lane_section->GetLaneById(lane_link->GetId()) : nullptr;
+            if (next_lane == nullptr)
             {
                 break;
             }
-            lane_section_index = 0;
-            lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);    
+            lane_section_index = next_lane_section_index;
+            lane_section        = next_lane_section;
+            current_lane_id     = next_lane->GetId();
+            current_lane        = next_lane;
+            distance_to_lane_end += lane_section->GetLength();
+            continue;
+        }
 
+        // Reached the end of this road: cross into its successor/predecessor, which may be a plain
+        // road or a junction.
+        RoadLink* road_link = current_road->GetLink(link_type);
+        if (road_link == nullptr)
+        {
+            break;
+        }
+
+        Road* next_road     = nullptr;
+        int   next_lane_id  = 0;
+
+        if (road_link->GetElementType() == RoadLink::ELEMENT_TYPE_JUNCTION)
+        {
+            // A junction has no lane-level <link> tag to follow for its incoming lanes - only the
+            // junction's own <connection>/<laneLink> table records which lane continues into which
+            // connecting road, and crucially that table is keyed by (incoming road, incoming lane):
+            // different lanes of the very same incoming road can lead into entirely different
+            // connecting roads at the same junction (e.g. one lane continuing straight while another
+            // peels off into an exit). Road::GetSuccessor()/GetPredecessor() ignore the lane and
+            // always take the first connection for the road, so they must not be used to pick
+            // next_road here - that silently followed the wrong connecting road (and then failed to
+            // find this lane in it) whenever a junction had more than one connection for the same
+            // incoming road.
+            Junction* junction = Position::GetOpenDrive()->GetJunctionById(road_link->GetElementId());
+            if (junction != nullptr)
+            {
+                unsigned int n_connections = junction->GetNumberOfRoadConnections(current_road->GetId(), current_lane_id);
+                if (n_connections > 0)
+                {
+                    // Rough proxy, same simplification as Road::GetSuccessor()/GetPredecessor(): if a
+                    // lane has more than one viable path through the junction, only the first is used.
+                    LaneRoadLaneConnection connection = junction->GetRoadConnectionByIdx(current_road->GetId(), current_lane_id, 0);
+                    next_road    = Position::GetOpenDrive()->GetRoadById(connection.GetConnectingRoadId());
+                    next_lane_id = connection.GetConnectinglaneId();
+
+                    // The connecting road's own s runs from its attachment to the incoming road
+                    // (us, current_road) towards its attachment to the outgoing road. If we arrive at
+                    // its s=0 end (CONTACT_POINT_START, the overwhelmingly typical authoring), driving
+                    // further into it means walking its successor side from here on; arriving at its
+                    // s=length end (CONTACT_POINT_END) means the reverse. Unlike current_road, this is
+                    // not derivable from next_lane_id's sign - a junction connecting road's own lane
+                    // numbering is local to it and not required to follow the reference-direction
+                    // convention used to pick `forward` for the original (non-junction) lane above.
+                    if (next_road != nullptr)
+                    {
+                        forward   = connection.contact_point_ != ContactPointType::CONTACT_POINT_END;
+                        link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
+                    }
+                }
+            }
+        }
+        else
+        {
+            next_road = forward ? current_road->GetSuccessor() : current_road->GetPredecessor();
+            if (next_road != nullptr)
+            {
+                next_lane_id = current_road->GetConnectingLaneId(road_link, current_lane_id, next_road->GetId());
+            }
+        }
+
+        if (next_road == nullptr || next_lane_id == 0)
+        {
+            break;
+        }
+
+        current_road       = next_road;
+        current_lane_id     = next_lane_id;
+        lane_section_index = forward ? 0 : static_cast<int>(current_road->GetNumberOfLaneSections()) - 1;
+        lane_section        = current_road->GetLaneSectionByIdx(static_cast<unsigned int>(lane_section_index));
+
+        current_lane = (lane_section != nullptr) ? lane_section->GetLaneById(current_lane_id) : nullptr;
+        if (current_lane == nullptr)
+        {
+            break;
         }
 
         distance_to_lane_end += lane_section->GetLength();
-        current_lane = lane_section->GetLaneById(lane_id);
-        if (current_lane)
-        {
-            next_lane = current_lane->GetLink(LinkType::SUCCESSOR);
-        }
-        else {
-            next_lane = nullptr;
-        }
-
-
     }
 
     if (distance_to_lane_end < MAX_LANE_DISTANCE)
@@ -2235,6 +2323,41 @@ Road* Road::GetSuccessor() const
     {
         Road* successor = pos->GetRoadById(road_id);
         result = successor;
+    }
+
+    delete pos;
+
+    return result;
+}
+
+Road* Road::GetPredecessor() const
+{
+    Road* result = nullptr;
+    RoadLink* road_link        = GetLink(LinkType::PREDECESSOR);
+    if (road_link == nullptr) {
+        return result;
+    }
+
+    Position* pos = new roadmanager::Position();
+    id_t                  road_id      = road_link->GetElementId();
+    RoadLink::ElementType element_type = road_link->GetElementType();
+
+      // JUNCTION
+    if (element_type == RoadLink::ElementType::ELEMENT_TYPE_JUNCTION)
+    {
+
+        Junction* junction = Position::GetOpenDrive()->GetJunctionById(road_id);
+
+        id_t  connecting_road_id = junction->GetConnectingRoadIdFromIncomingRoadId(this->GetId(), 0);
+        Road* connecting_road    = pos->GetRoadById(connecting_road_id);
+        result = connecting_road;
+    }
+
+    // ROAD
+    else
+    {
+        Road* predecessor = pos->GetRoadById(road_id);
+        result = predecessor;
     }
 
     delete pos;
