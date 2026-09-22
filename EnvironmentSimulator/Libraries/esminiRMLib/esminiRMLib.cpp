@@ -21,6 +21,10 @@ using namespace roadmanager;
 static roadmanager::OpenDrive* odrManager = nullptr;
 static std::vector<Position>   position;
 static std::string             returnString;  // use this for returning strings
+static std::string             returnObjectTypeString;  // separate buffer for RM_RoadObject::type, so
+                                                          // it does not alias/invalidate returnString's
+                                                          // c_str() when both are set within one call
+                                                          // (see RM_GetRoadObject())
 
 static int GetRoadInfo(int index, float lookahead_distance, void* data, int lookAheadMode, bool inRoadDrivingDirection, bool probe_extension)
 {
@@ -1027,6 +1031,71 @@ extern "C"
         }
 
         // Couldn't find the sign
+        return -1;
+    }
+
+    RM_DLL_API int RM_GetNumberOfRoadObjects(id_t road_id)
+    {
+        if (odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(road_id);
+
+        if (road != NULL)
+        {
+            return static_cast<int>(road->GetNumberOfObjects());
+        }
+
+        return 0;
+    }
+
+    RM_DLL_API int RM_GetRoadObject(id_t road_id, unsigned int index, RM_RoadObject* road_object)
+    {
+        if (road_object == nullptr || odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(road_id);
+
+        if (road != NULL)
+        {
+            roadmanager::RMObject* o = road->GetRoadObject(index);
+
+            if (o)
+            {
+                // Resolve global cartesian position (x, y, z) and road heading from the road
+                // coordinate, exactly like RM_GetRoadSign() above - but unlike a sign, an <object>'s
+                // own hdg (GetHOffset()) is routinely a large, meaningful offset from the road's own
+                // heading (e.g. a crosswalk authored roughly perpendicular to the road for its own
+                // walking direction), so it has to be added in here rather than dropped.
+                roadmanager::Position pos;
+                pos.SetTrackPos(road_id, o->GetS(), o->GetT());
+
+                road_object->id           = o->GetId();
+                returnString              = o->GetName();
+                road_object->name         = returnString.c_str();
+                returnObjectTypeString    = o->GetTypeStr();
+                road_object->type         = returnObjectTypeString.c_str();
+                road_object->x            = static_cast<float>(pos.GetX());
+                road_object->y            = static_cast<float>(pos.GetY());
+                road_object->z            = static_cast<float>(pos.GetZ());
+                road_object->h            = static_cast<float>(pos.GetHRoad() + o->GetHOffset());
+                road_object->roadId       = road_id;
+                road_object->s            = static_cast<float>(o->GetS());
+                road_object->t            = static_cast<float>(o->GetT());
+                road_object->z_offset     = static_cast<float>(o->GetZOffset());
+                road_object->length       = static_cast<float>(o->GetLength());
+                road_object->height       = static_cast<float>(o->GetHeight());
+                road_object->width        = static_cast<float>(o->GetWidth());
+
+                return 0;
+            }
+        }
+
+        // Couldn't find the object
         return -1;
     }
 

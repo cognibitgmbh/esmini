@@ -118,6 +118,32 @@ typedef struct
 
 typedef struct
 {
+    int         id;        // unique identifier of the object
+    float       x;         // global x coordinate of the object's position
+    float       y;         // global y coordinate of the object's position
+    float       z;         // global z coordinate of the object's position
+    float       z_offset;  // z offset from road level
+    float       h;         // global heading of the object - road heading at (s, t) plus the
+                            // object's own hdg offset (<object hdg="...">), NOT just the road's own
+                            // heading (unlike RM_RoadSign::h, which - see RM_GetRoadSign's own
+                            // implementation - only ever carries the resolved road heading; signs are
+                            // typically authored to just face with/against the road, but <object>
+                            // elements like crosswalks are routinely authored at some other angle
+                            // entirely, e.g. roughly perpendicular for a crosswalk's own walking
+                            // direction, so that offset cannot be dropped here the way it is there)
+    id_t        roadId;    // road id of the object's road position
+    float       s;         // longitudinal position along road
+    float       t;         // lateral position from road reference line
+    const char* name;      // object name, as given in OpenDRIVE
+    const char* type;      // object type string exactly as OpenDRIVE/esmini spell it, e.g.
+                            // "crosswalk", "pole", "tree" - see RMObject::Type2Str() for the full list
+    float       length;    // length as specified in OpenDRIVE
+    float       height;    // height as specified in OpenDRIVE
+    float       width;     // width as specified in OpenDRIVE
+} RM_RoadObject;
+
+typedef struct
+{
     int fromLane;
     int toLane;
 } RM_RoadObjValidity;
@@ -552,6 +578,23 @@ extern "C"
     @return 0 on success, -1 on any error, e.g. specified road is missing
     */
     RM_DLL_API int RM_GetLaneWidthByRoadId(id_t road_id, int lane_id, float s, float* width);
+
+    /**
+    Get the number of <object> road objects (not <signal> - see RM_GetNumberOfRoadSigns() for those)
+    placed along the specified road, e.g. crosswalks, poles, trees.
+    @param road_id The road along which to look for objects
+    @return Number of road objects, -1 on error
+    */
+    RM_DLL_API int RM_GetNumberOfRoadObjects(id_t road_id);
+
+    /**
+    Get information on a specified road object
+    @param road_id The road of which to look for the object
+    @param index Index of the object. Note: not ID
+    @param road_object Pointer/reference to a RM_RoadObject struct to be filled in
+    @return 0 if successful, -1 if not
+    */
+    RM_DLL_API int RM_GetRoadObject(id_t road_id, unsigned int index, RM_RoadObject* road_object);
 
     /**
     Get the distance, from the current longitudinal position, until the specified lane ends -
