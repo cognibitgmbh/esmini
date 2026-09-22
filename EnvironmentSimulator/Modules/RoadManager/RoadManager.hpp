@@ -2832,6 +2832,11 @@ namespace roadmanager
         double GetDistanceToLaneEndByS(double s, int lane_id, double min_width = 0.0) const;
         double GetDistanceToRampByS(double s, int lane_id) const;
         double GetDistanceToNextExitByS(double s, int lane_id) const;
+
+        // Walks forward from (s, lane_id) along the lane's own driving direction, road by road, up to
+        // max_distance. Returns true and sets junction_id/distance if a junction connecting road
+        // (Road::GetJunction() != ID_UNDEFINED) is reached within that horizon, false otherwise.
+        bool GetNextJunctionByS(double s, int lane_id, double max_distance, id_t &junction_id, double &distance) const;
         Lane::Material *GetLaneMaterialByS(double s, int lane_id) const;
         double          GetSpeedByS(double s) const;
         RoadType        GetRoadTypeByS(double s) const;

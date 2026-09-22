@@ -2394,6 +2394,44 @@ double Road::GetDistanceToNextExitByS(double s, int lane_id) const
     }
 }
 
+bool Road::GetNextJunctionByS(double s, int lane_id, double max_distance, id_t &junction_id, double &distance) const
+{
+    bool     forward   = lane_id < 0;
+    LinkType link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
+
+    const Road*  current_road       = this;
+    int          lane_section_index = current_road->GetLaneSectionIdxByS(s, 0);
+    LaneSection* lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
+
+    bool on_junction = current_road->GetJunction() != ID_UNDEFINED;
+    double distance_to_junction = on_junction
+        ? 0.0
+        : (forward ? lane_section->GetLength() - (s - lane_section->GetS()) : (s - lane_section->GetS()));
+
+    while (!on_junction && current_road != nullptr && distance_to_junction < max_distance)
+    {
+        if (!AdvanceToNextLaneSectionInDrivingDirection(current_road, lane_section_index, lane_section, forward, link_type))
+        {
+            break;
+        }
+
+        on_junction = current_road->GetJunction() != ID_UNDEFINED;
+        if (!on_junction)
+        {
+            distance_to_junction += lane_section->GetLength();
+        }
+    }
+
+    if (on_junction && distance_to_junction <= max_distance)
+    {
+        junction_id = current_road->GetJunction();
+        distance    = distance_to_junction;
+        return true;
+    }
+
+    return false;
+}
+
 Lane* Road::GetRightMostLane(double s, int lane_id) const
 {
     LaneSection* lsec = GetLaneSectionByS(s, 0);

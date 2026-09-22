@@ -150,6 +150,18 @@ typedef struct
 
 typedef struct
 {
+    id_t incomingRoadId;    // road leading up to the junction on this connection
+    id_t connectingRoadId;  // the real Road spanning the junction for this connection
+} RM_JunctionConnection;
+
+typedef struct
+{
+    int fromLaneId;  // lane id on the connection's incoming road
+    int toLaneId;    // corresponding lane id on the connection's connecting road
+} RM_JunctionLaneLink;
+
+typedef struct
+{
     float       a_;
     const char* axis_;
     float       b_;
@@ -595,6 +607,53 @@ extern "C"
     @return 0 if successful, -1 if not
     */
     RM_DLL_API int RM_GetRoadObject(id_t road_id, unsigned int index, RM_RoadObject* road_object);
+
+    /**
+    Get the id of the next junction reached by walking forward from the current position, along the
+    current lane's own driving direction (raw-lane-id-sign convention, see
+    roadmanager::Road::GetNextJunctionByS()), up to max_distance.
+    @param handle Handle to the position object from which to search
+    @param max_distance How far ahead to look, in meters
+    @param distance Pointer to store the distance to the found junction (only set if a junction id >= 0 is returned)
+    @return The junction id if one is found within max_distance, -1 if none is found or on error
+    */
+    RM_DLL_API int RM_GetNextJunctionId(int handle, float max_distance, float* distance);
+
+    /**
+    Get the number of <connection> elements of the specified junction - each one links one incoming
+    road to one connecting road (the real Road spanning the junction for that connection).
+    @param junction_id The junction to look up
+    @return Number of connections, -1 on error
+    */
+    RM_DLL_API int RM_GetNumberOfJunctionConnections(id_t junction_id);
+
+    /**
+    Get information on one <connection> of a junction.
+    @param junction_id The junction to look up
+    @param index Index of the connection. Note: not ID
+    @param connection Pointer/reference to a RM_JunctionConnection struct to be filled in
+    @return 0 if successful, -1 if not
+    */
+    RM_DLL_API int RM_GetJunctionConnection(id_t junction_id, unsigned int index, RM_JunctionConnection* connection);
+
+    /**
+    Get the number of <laneLink> elements of one junction connection - each one maps one incoming
+    lane id (on the connection's incoming road) to a lane id on the connection's connecting road.
+    @param junction_id The junction the connection belongs to
+    @param connection_index Index of the connection within the junction. Note: not ID
+    @return Number of lane links, -1 on error
+    */
+    RM_DLL_API int RM_GetNumberOfJunctionConnectionLaneLinks(id_t junction_id, unsigned int connection_index);
+
+    /**
+    Get one <laneLink> of a junction connection.
+    @param junction_id The junction the connection belongs to
+    @param connection_index Index of the connection within the junction. Note: not ID
+    @param link_index Index of the lane link within the connection. Note: not ID
+    @param lane_link Pointer/reference to a RM_JunctionLaneLink struct to be filled in
+    @return 0 if successful, -1 if not
+    */
+    RM_DLL_API int RM_GetJunctionConnectionLaneLink(id_t junction_id, unsigned int connection_index, unsigned int link_index, RM_JunctionLaneLink* lane_link);
 
     /**
     Get the distance, from the current longitudinal position, until the specified lane ends -

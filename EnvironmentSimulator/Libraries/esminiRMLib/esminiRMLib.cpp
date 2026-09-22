@@ -1099,6 +1099,128 @@ extern "C"
         return -1;
     }
 
+    RM_DLL_API int RM_GetNextJunctionId(int handle, float max_distance, float* distance)
+    {
+        if (distance == nullptr || odrManager == nullptr || handle < 0 || handle >= static_cast<int>(position.size()))
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(position[static_cast<unsigned int>(handle)].GetTrackId());
+        if (road == nullptr)
+        {
+            return -1;
+        }
+
+        id_t   junction_id;
+        double next_junction_distance;
+        if (!road->GetNextJunctionByS(position[static_cast<unsigned int>(handle)].GetS(),
+                                       position[static_cast<unsigned int>(handle)].GetLaneId(),
+                                       static_cast<double>(max_distance),
+                                       junction_id,
+                                       next_junction_distance))
+        {
+            return -1;
+        }
+
+        *distance = static_cast<float>(next_junction_distance);
+        return static_cast<int>(junction_id);
+    }
+
+    RM_DLL_API int RM_GetNumberOfJunctionConnections(id_t junction_id)
+    {
+        if (odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Junction* junction = odrManager->GetJunctionById(junction_id);
+        if (junction == nullptr)
+        {
+            return -1;
+        }
+
+        return static_cast<int>(junction->GetNumberOfConnections());
+    }
+
+    RM_DLL_API int RM_GetJunctionConnection(id_t junction_id, unsigned int index, RM_JunctionConnection* connection)
+    {
+        if (connection == nullptr || odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Junction* junction = odrManager->GetJunctionById(junction_id);
+        if (junction == nullptr || index >= junction->GetNumberOfConnections())
+        {
+            return -1;
+        }
+
+        roadmanager::Connection* c = junction->GetConnectionByIdx(index);
+        if (c == nullptr || c->GetIncomingRoad() == nullptr || c->GetConnectingRoad() == nullptr)
+        {
+            return -1;
+        }
+
+        connection->incomingRoadId   = c->GetIncomingRoad()->GetId();
+        connection->connectingRoadId = c->GetConnectingRoad()->GetId();
+
+        return 0;
+    }
+
+    RM_DLL_API int RM_GetNumberOfJunctionConnectionLaneLinks(id_t junction_id, unsigned int connection_index)
+    {
+        if (odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Junction* junction = odrManager->GetJunctionById(junction_id);
+        if (junction == nullptr || connection_index >= junction->GetNumberOfConnections())
+        {
+            return -1;
+        }
+
+        roadmanager::Connection* c = junction->GetConnectionByIdx(connection_index);
+        if (c == nullptr)
+        {
+            return -1;
+        }
+
+        return static_cast<int>(c->GetNumberOfLaneLinks());
+    }
+
+    RM_DLL_API int RM_GetJunctionConnectionLaneLink(id_t junction_id, unsigned int connection_index, unsigned int link_index, RM_JunctionLaneLink* lane_link)
+    {
+        if (lane_link == nullptr || odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Junction* junction = odrManager->GetJunctionById(junction_id);
+        if (junction == nullptr || connection_index >= junction->GetNumberOfConnections())
+        {
+            return -1;
+        }
+
+        roadmanager::Connection* c = junction->GetConnectionByIdx(connection_index);
+        if (c == nullptr || link_index >= c->GetNumberOfLaneLinks())
+        {
+            return -1;
+        }
+
+        roadmanager::JunctionLaneLink* link = c->GetLaneLink(link_index);
+        if (link == nullptr)
+        {
+            return -1;
+        }
+
+        lane_link->fromLaneId = link->from_;
+        lane_link->toLaneId   = link->to_;
+
+        return 0;
+    }
+
     RM_DLL_API int RM_GetNumberOfRoadSignValidityRecords(id_t road_id, unsigned int index)
     {
         if (odrManager == nullptr)
