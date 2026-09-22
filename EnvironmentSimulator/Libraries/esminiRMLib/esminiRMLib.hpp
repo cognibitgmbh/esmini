@@ -554,6 +554,23 @@ extern "C"
     RM_DLL_API int RM_GetLaneWidthByRoadId(id_t road_id, int lane_id, float s, float* width);
 
     /**
+    Get the distance, from the current longitudinal position, until the specified lane ends -
+    following that lane's own driving direction (see roadmanager::Road::GetDistanceToLaneEndByS() for
+    the raw-lane-id-sign convention this follows), across road/junction boundaries, capped at
+    MAX_LANE_DISTANCE.
+    @param handle Handle to the position object from which to measure
+    @param lane_id Id (raw OpenDRIVE, not any caller-side sign convention) of the lane to measure
+    @param min_width If > 0, the lane counts as ended as soon as its <width> narrows below this value,
+    not only where its <lane> element is no longer present in the data - some maps keep a lane's
+    element around, tapered to zero width, for some distance after it is no longer actually
+    drivable (e.g. for a smooth visual merge). 0 (or any value <= 0) disables this and only considers
+    the lane's own topological presence, exactly matching the legacy (pre-min_width) behavior.
+    @param distance Pointer to store the resulting distance
+    @return 0 on success, -1 on any error, e.g. current road is missing
+    */
+    RM_DLL_API int RM_GetDistanceToLaneEndByS(int handle, int lane_id, float min_width, float* distance);
+
+    /**
     Get type of lane with specified lane id, at current longitudinal position
     For valid types, see RoadManager.hpp::Lane::LaneType enum
     @param handle Handle to the position object from which to measure

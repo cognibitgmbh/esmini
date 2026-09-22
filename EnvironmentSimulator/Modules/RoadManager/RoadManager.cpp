@@ -2023,7 +2023,57 @@ LaneRoadMark::RoadMarkType Road::GetRoadMarkLeftByS(double s, int lane_id) const
     
 }
 
-double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
+// A lane's <lane> element can stay present in the OpenDRIVE data - and so still be found by
+// GetDistanceToLaneEndByS()'s own lane-graph traversal - well after its <width> record has already
+// tapered it down to zero width, e.g. for a smooth visual merge where the lane is kept "on paper" for
+// some distance after a driver could no longer physically fit in it. Returns true and sets found_s to
+// the first point (walking from from_s towards to_s, which may be either direction) where lane_id's
+// width in lane_section drops below min_width; false if it never does in that range. min_width <= 0
+// disables the check entirely (a real lane width is never negative), matching the pre-min_width
+// behavior for any caller that does not ask for it.
+static bool FindWidthBelowMinDistance(const LaneSection* lane_section, int lane_id, double from_s, double to_s, double min_width, double& found_s)
+{
+    if (min_width <= 0.0 || lane_section == nullptr)
+    {
+        return false;
+    }
+
+    const double STEP = 1.0;  // meters - fine enough for the width tapers seen in practice, cheap enough to walk up to MAX_LANE_DISTANCE if nothing is found
+    bool         increasing = to_s >= from_s;
+
+    double prev_s     = from_s;
+    double prev_width = lane_section->GetWidth(prev_s, lane_id);
+
+    if (prev_width < min_width)
+    {
+        found_s = prev_s;
+        return true;
+    }
+
+    while ((increasing && prev_s < to_s) || (!increasing && prev_s > to_s))
+    {
+        double next_s     = increasing ? std::min(prev_s + STEP, to_s) : std::max(prev_s - STEP, to_s);
+        double next_width = lane_section->GetWidth(next_s, lane_id);
+
+        if (next_width < min_width)
+        {
+            // Linearly interpolate between the last two samples for sub-STEP precision, rather than
+            // reporting the whole meter-wide sampling step as the crossing point.
+            double denom = prev_width - next_width;
+            double frac  = (denom > SMALL_NUMBER) ? (prev_width - min_width) / denom : 0.0;
+            frac         = CLAMP(frac, 0.0, 1.0);
+            found_s      = prev_s + (next_s - prev_s) * frac;
+            return true;
+        }
+
+        prev_s     = next_s;
+        prev_width = next_width;
+    }
+
+    return false;
+}
+
+double Road::GetDistanceToLaneEndByS(double s, int lane_id, double min_width) const
 {
     //LOG_INFO("GetDistanceToLaneEndByS {} {}", s, lane_id);
 
@@ -2054,6 +2104,15 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
         return distance_to_lane_end;
     }
 
+    {
+        double section_far_end = forward ? (lane_section->GetS() + lane_section->GetLength()) : lane_section->GetS();
+        double narrow_s;
+        if (FindWidthBelowMinDistance(lane_section, current_lane_id, s, section_far_end, min_width, narrow_s))
+        {
+            return std::abs(narrow_s - s);
+        }
+    }
+
     while (current_road != nullptr && distance_to_lane_end < MAX_LANE_DISTANCE)
     {
         //LOG_INFO("current_road = {}, lane_section_index = {}, distance = {}", current_road->GetId(), lane_section_index, distance_to_lane_end);
@@ -2081,6 +2140,18 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
             lane_section        = next_lane_section;
             current_lane_id     = next_lane->GetId();
             current_lane        = next_lane;
+
+            {
+                double section_near_end = forward ? lane_section->GetS() : (lane_section->GetS() + lane_section->GetLength());
+                double section_far_end  = forward ? (lane_section->GetS() + lane_section->GetLength()) : lane_section->GetS();
+                double narrow_s;
+                if (FindWidthBelowMinDistance(lane_section, current_lane_id, section_near_end, section_far_end, min_width, narrow_s))
+                {
+                    distance_to_lane_end += std::abs(narrow_s - section_near_end);
+                    return distance_to_lane_end < MAX_LANE_DISTANCE ? distance_to_lane_end : MAX_LANE_DISTANCE;
+                }
+            }
+
             distance_to_lane_end += lane_section->GetLength();
             continue;
         }
@@ -2167,6 +2238,17 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id) const
         if (current_lane == nullptr)
         {
             break;
+        }
+
+        {
+            double section_near_end = forward ? lane_section->GetS() : (lane_section->GetS() + lane_section->GetLength());
+            double section_far_end  = forward ? (lane_section->GetS() + lane_section->GetLength()) : lane_section->GetS();
+            double narrow_s;
+            if (FindWidthBelowMinDistance(lane_section, current_lane_id, section_near_end, section_far_end, min_width, narrow_s))
+            {
+                distance_to_lane_end += std::abs(narrow_s - section_near_end);
+                return distance_to_lane_end < MAX_LANE_DISTANCE ? distance_to_lane_end : MAX_LANE_DISTANCE;
+            }
         }
 
         distance_to_lane_end += lane_section->GetLength();

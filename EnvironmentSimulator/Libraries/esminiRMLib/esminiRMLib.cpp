@@ -887,6 +887,24 @@ extern "C"
         return 0;
     }
 
+    RM_DLL_API int RM_GetDistanceToLaneEndByS(int handle, int lane_id, float min_width, float* distance)
+    {
+        if (distance == nullptr || odrManager == nullptr || handle < 0 || handle >= static_cast<int>(position.size()))
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(position[static_cast<unsigned int>(handle)].GetTrackId());
+        if (road == nullptr)
+        {
+            return -1;
+        }
+
+        *distance = static_cast<float>(road->GetDistanceToLaneEndByS(position[static_cast<unsigned int>(handle)].GetS(), lane_id, static_cast<double>(min_width)));
+
+        return 0;
+    }
+
     RM_DLL_API int RM_GetLaneType(int handle, int lane_id)
     {
         if (odrManager == nullptr || handle < 0 || handle >= static_cast<int>(position.size()))
