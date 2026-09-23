@@ -620,6 +620,19 @@ extern "C"
     RM_DLL_API int RM_GetNextJunctionId(int handle, float max_distance, float* distance);
 
     /**
+    Get the id of the previous junction reached by walking backward from the current position -
+    against the current lane's own driving direction (raw-lane-id-sign convention, see
+    roadmanager::Road::GetPreviousJunctionByS()) - up to max_distance, or until reaching
+    stop_at_road_id (whichever comes first).
+    @param handle Handle to the position object from which to search
+    @param max_distance How far back to look, in meters
+    @param stop_at_road_id Give up (return -1) if this road is reached before any junction
+    @param distance Pointer to store the distance to the found junction (only set if a junction id >= 0 is returned)
+    @return The junction id if one is found before max_distance/stop_at_road_id, -1 otherwise or on error
+    */
+    RM_DLL_API int RM_GetPreviousJunctionId(int handle, float max_distance, id_t stop_at_road_id, float* distance);
+
+    /**
     Is (target_road_id, target_lane_id) reachable by walking forward from the current position along
     the current lane's own driving direction (see roadmanager::Road::IsUpstreamOfRoadLane()), up to
     max_distance? Returns true immediately if the current position is already on target_road_id/

@@ -2838,6 +2838,13 @@ namespace roadmanager
         // (Road::GetJunction() != ID_UNDEFINED) is reached within that horizon, false otherwise.
         bool GetNextJunctionByS(double s, int lane_id, double max_distance, id_t &junction_id, double &distance) const;
 
+        // Walks backward from (s, lane_id) - i.e. against the lane's own driving direction, road by
+        // road, up to max_distance. Returns true and sets junction_id/distance if a junction
+        // connecting road is reached before either running out of network, exceeding max_distance, or
+        // reaching stop_at_road_id (whichever comes first - the last one lets a caller ask "is there a
+        // junction upstream of this position before reaching that other, known position").
+        bool GetPreviousJunctionByS(double s, int lane_id, double max_distance, id_t stop_at_road_id, id_t &junction_id, double &distance) const;
+
         // Walks forward from (s, lane_id) along the lane's own driving direction, road by road,
         // relinking lane_id across lane-section/road/junction boundaries exactly like
         // GetDistanceToLaneEndByS() (minus its min_width taper logic), up to max_distance. Returns
