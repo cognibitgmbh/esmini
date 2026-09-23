@@ -1127,6 +1127,28 @@ extern "C"
         return static_cast<int>(junction_id);
     }
 
+    RM_DLL_API int RM_IsUpstreamOfRoadLane(int handle, id_t target_road_id, int target_lane_id, float max_distance)
+    {
+        if (odrManager == nullptr || handle < 0 || handle >= static_cast<int>(position.size()))
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(position[static_cast<unsigned int>(handle)].GetTrackId());
+        if (road == nullptr)
+        {
+            return -1;
+        }
+
+        bool is_upstream = road->IsUpstreamOfRoadLane(position[static_cast<unsigned int>(handle)].GetS(),
+                                                        position[static_cast<unsigned int>(handle)].GetLaneId(),
+                                                        target_road_id,
+                                                        target_lane_id,
+                                                        static_cast<double>(max_distance));
+
+        return is_upstream ? 1 : 0;
+    }
+
     RM_DLL_API int RM_GetNumberOfJunctionConnections(id_t junction_id)
     {
         if (odrManager == nullptr)

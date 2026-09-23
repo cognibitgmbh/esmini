@@ -620,6 +620,19 @@ extern "C"
     RM_DLL_API int RM_GetNextJunctionId(int handle, float max_distance, float* distance);
 
     /**
+    Is (target_road_id, target_lane_id) reachable by walking forward from the current position along
+    the current lane's own driving direction (see roadmanager::Road::IsUpstreamOfRoadLane()), up to
+    max_distance? Returns true immediately if the current position is already on target_road_id/
+    target_lane_id.
+    @param handle Handle to the position object from which to search
+    @param target_road_id The road to look for
+    @param target_lane_id The lane (raw OpenDRIVE, not any caller-side sign convention) to look for
+    @param max_distance How far ahead to look, in meters
+    @return 1 if reachable, 0 if not, -1 on error
+    */
+    RM_DLL_API int RM_IsUpstreamOfRoadLane(int handle, id_t target_road_id, int target_lane_id, float max_distance);
+
+    /**
     Get the number of <connection> elements of the specified junction - each one links one incoming
     road to one connecting road (the real Road spanning the junction for that connection).
     @param junction_id The junction to look up

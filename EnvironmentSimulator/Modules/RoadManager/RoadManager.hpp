@@ -2837,6 +2837,13 @@ namespace roadmanager
         // max_distance. Returns true and sets junction_id/distance if a junction connecting road
         // (Road::GetJunction() != ID_UNDEFINED) is reached within that horizon, false otherwise.
         bool GetNextJunctionByS(double s, int lane_id, double max_distance, id_t &junction_id, double &distance) const;
+
+        // Walks forward from (s, lane_id) along the lane's own driving direction, road by road,
+        // relinking lane_id across lane-section/road/junction boundaries exactly like
+        // GetDistanceToLaneEndByS() (minus its min_width taper logic), up to max_distance. Returns
+        // true if (target_road_id, target_lane_id) is reached - including immediately, if already on
+        // it - before either running out of network or exceeding max_distance.
+        bool IsUpstreamOfRoadLane(double s, int lane_id, id_t target_road_id, int target_lane_id, double max_distance) const;
         Lane::Material *GetLaneMaterialByS(double s, int lane_id) const;
         double          GetSpeedByS(double s) const;
         RoadType        GetRoadTypeByS(double s) const;

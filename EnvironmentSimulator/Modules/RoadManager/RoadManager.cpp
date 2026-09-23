@@ -2261,6 +2261,131 @@ double Road::GetDistanceToLaneEndByS(double s, int lane_id, double min_width) co
     return MAX_LANE_DISTANCE;
 }
 
+bool Road::IsUpstreamOfRoadLane(double s, int lane_id, id_t target_road_id, int target_lane_id, double max_distance) const
+{
+    if (GetId() == target_road_id && lane_id == target_lane_id)
+    {
+        return true;
+    }
+
+    bool     forward   = lane_id < 0;
+    LinkType link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
+
+    const Road* current_road   = this;
+    int         current_lane_id = lane_id;
+
+    int          lane_section_index = current_road->GetLaneSectionIdxByS(s, 0);
+    LaneSection* lane_section       = current_road->GetLaneSectionByIdx(lane_section_index);
+
+    double distance = forward
+        ? lane_section->GetLength() - (s - lane_section->GetS())
+        : (s - lane_section->GetS());
+
+    Lane* current_lane = lane_section->GetLaneById(current_lane_id);
+    if (current_lane == nullptr)
+    {
+        return false;
+    }
+
+    while (current_road != nullptr && distance < max_distance)
+    {
+        int          next_lane_section_index = lane_section_index + (forward ? 1 : -1);
+        LaneSection* next_lane_section        = (next_lane_section_index >= 0)
+            ? current_road->GetLaneSectionByIdx(static_cast<unsigned int>(next_lane_section_index))
+            : nullptr;
+
+        if (next_lane_section != nullptr)
+        {
+            // Still within the same road: follow the lane's own link (can rename the lane id between
+            // sections, see GetDistanceToLaneEndByS()'s own comment on this).
+            LaneLink* lane_link = current_lane->GetLink(link_type);
+            Lane*     next_lane = (lane_link != nullptr) ? next_lane_section->GetLaneById(lane_link->GetId()) : nullptr;
+            if (next_lane == nullptr)
+            {
+                break;
+            }
+            lane_section_index = next_lane_section_index;
+            lane_section        = next_lane_section;
+            current_lane_id     = next_lane->GetId();
+            current_lane        = next_lane;
+
+            if (current_road->GetId() == target_road_id && current_lane_id == target_lane_id)
+            {
+                return true;
+            }
+
+            distance += lane_section->GetLength();
+            continue;
+        }
+
+        // Reached the end of this road: cross into its successor/predecessor, which may be a plain
+        // road or a junction - same logic as GetDistanceToLaneEndByS()'s own road/junction crossing.
+        RoadLink* road_link = current_road->GetLink(link_type);
+        if (road_link == nullptr)
+        {
+            break;
+        }
+
+        Road* next_road    = nullptr;
+        int   next_lane_id = 0;
+
+        if (road_link->GetElementType() == RoadLink::ELEMENT_TYPE_JUNCTION)
+        {
+            Junction* junction = Position::GetOpenDrive()->GetJunctionById(road_link->GetElementId());
+            if (junction != nullptr)
+            {
+                unsigned int n_connections = junction->GetNumberOfRoadConnections(current_road->GetId(), current_lane_id);
+                if (n_connections > 0)
+                {
+                    LaneRoadLaneConnection connection = junction->GetRoadConnectionByIdx(current_road->GetId(), current_lane_id, 0);
+                    next_road    = Position::GetOpenDrive()->GetRoadById(connection.GetConnectingRoadId());
+                    next_lane_id = connection.GetConnectinglaneId();
+
+                    if (next_road != nullptr)
+                    {
+                        forward   = connection.contact_point_ != ContactPointType::CONTACT_POINT_END;
+                        link_type = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
+                    }
+                }
+            }
+        }
+        else
+        {
+            next_road = forward ? current_road->GetSuccessor() : current_road->GetPredecessor();
+            if (next_road != nullptr)
+            {
+                next_lane_id = current_road->GetConnectingLaneId(road_link, current_lane_id, next_road->GetId());
+                forward      = road_link->GetContactPointType() != ContactPointType::CONTACT_POINT_END;
+                link_type    = forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR;
+            }
+        }
+
+        if (next_road == nullptr || next_lane_id == 0)
+        {
+            break;
+        }
+
+        current_road       = next_road;
+        current_lane_id     = next_lane_id;
+        lane_section_index = forward ? 0 : static_cast<int>(current_road->GetNumberOfLaneSections()) - 1;
+        lane_section        = current_road->GetLaneSectionByIdx(static_cast<unsigned int>(lane_section_index));
+
+        current_lane = (lane_section != nullptr) ? lane_section->GetLaneById(current_lane_id) : nullptr;
+        if (current_lane == nullptr)
+        {
+            break;
+        }
+
+        if (current_road->GetId() == target_road_id && current_lane_id == target_lane_id)
+        {
+            return true;
+        }
+
+        distance += lane_section->GetLength();
+    }
+
+    return false;
+}
 
 // Shared by GetDistanceToRampByS() and GetDistanceToNextExitByS(): walk lane sections/roads in the
 // direction this lane actually drives (see GetDistanceToLaneEndByS() for the raw-lane-id-sign
