@@ -11707,8 +11707,23 @@ double Position::GetSpeedLimit() const
 
         if (speed_limit < SMALL_NUMBER)
         {
-            // No speed limit defined, set a value depending on number of lanes
-            speed_limit = GetOpenDrive()->GetRoadByIdx(track_idx_)->GetNumberOfDrivingLanesSide(GetS(), SIGN(GetLaneId())) > 1 ? 120 / 3.6 : 60 / 3.6;
+            // No speed limit defined, set a value depending on number of lanes. A highway on-ramp is
+            // commonly modelled as its own short, single-lane road purely for ramp geometry reasons
+            // (see e.g. cognibit's autobahn*.xodr test assets) - the "only 1 driving lane -> 60 km/h"
+            // fallback below would then wrongly treat it like a slow, single-lane side road instead of
+            // the highway-speed ramp it actually is, causing a vehicle to brake hard right at the start
+            // of the ramp. Give on-ramp lanes their own, more generous default instead.
+            // TODO: this whole default is coarse (e.g. country-specific speed limits aren't considered
+            // at all) and should eventually be replaced by a proper, configurable default - for now
+            // this only special-cases the on-ramp case that was actually observed to cause trouble.
+            if (road->GetLaneTypeByS(GetS(), GetLaneId()) == Lane::LaneType::LANE_TYPE_ON_RAMP)
+            {
+                speed_limit = 250 / 3.6;
+            }
+            else
+            {
+                speed_limit = GetOpenDrive()->GetRoadByIdx(track_idx_)->GetNumberOfDrivingLanesSide(GetS(), SIGN(GetLaneId())) > 1 ? 120 / 3.6 : 60 / 3.6;
+            }
         }
     }
 
