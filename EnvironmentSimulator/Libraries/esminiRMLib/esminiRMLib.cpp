@@ -25,6 +25,10 @@ static std::string             returnObjectTypeString;  // separate buffer for R
                                                           // it does not alias/invalidate returnString's
                                                           // c_str() when both are set within one call
                                                           // (see RM_GetRoadObject())
+static std::string             returnSignTypeString;     // separate buffers for RM_RoadSign::type/subtype,
+static std::string             returnSignSubtypeString;  // same reasoning as returnObjectTypeString above
+                                                          // (see RM_GetRoadSign(), which also sets ::name
+                                                          // via returnString in the same call)
 
 static int GetRoadInfo(int index, float lookahead_distance, void* data, int lookAheadMode, bool inRoadDrivingDirection, bool probe_extension)
 {
@@ -1025,6 +1029,11 @@ extern "C"
                 road_sign->height      = static_cast<float>(s->GetHeight());
                 road_sign->width       = static_cast<float>(s->GetWidth());
                 road_sign->dynamic     = s->IsDynamic() ? 1 : 0;
+                returnSignTypeString    = s->GetType();
+                road_sign->type         = returnSignTypeString.c_str();
+                returnSignSubtypeString = s->GetSubType();
+                road_sign->subtype      = returnSignSubtypeString.c_str();
+                road_sign->value        = static_cast<float>(s->GetValue());
 
                 return 0;
             }

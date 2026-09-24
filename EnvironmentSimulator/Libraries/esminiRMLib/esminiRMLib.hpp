@@ -114,6 +114,10 @@ typedef struct
     float       height;       // height as specified in OpenDRIVE
     float       width;        // width as specified in OpenDRIVE
     int         dynamic;      // 1 if sign is a dynamic signal (e.g. traffic light), 0 if static
+    const char* type;         // OpenDRIVE/country-specific type code, e.g. "1000001" for a
+                               // 3-aspect vehicle traffic light under country="OpenDRIVE"
+    const char* subtype;      // OpenDRIVE subtype code, "-1" if not used by this sign
+    float       value;        // OpenDRIVE value attribute, e.g. a speed limit's numeric value; -1 if unused
 } RM_RoadSign;
 
 typedef struct
