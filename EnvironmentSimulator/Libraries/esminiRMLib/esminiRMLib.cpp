@@ -1320,6 +1320,40 @@ extern "C"
         return -1;
     }
 
+    RM_DLL_API int RM_GetNumberOfRoadSignalReferences(id_t road_id)
+    {
+        if (odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(road_id);
+
+        if (road != NULL)
+        {
+            return static_cast<int>(road->GetNumberOfSignalReferences());
+        }
+
+        return 0;
+    }
+
+    RM_DLL_API int RM_GetRoadSignalReferenceId(id_t road_id, unsigned int index)
+    {
+        if (odrManager == nullptr)
+        {
+            return -1;
+        }
+
+        roadmanager::Road* road = odrManager->GetRoadById(road_id);
+
+        if (road != NULL)
+        {
+            return road->GetSignalReferenceId(index);
+        }
+
+        return -1;
+    }
+
     RM_DLL_API int RM_GetRoadJunctionId(id_t road_id)
     {
         if (odrManager == nullptr)

@@ -767,6 +767,23 @@ extern "C"
     RM_DLL_API int RM_GetNumberOfRoadSignValidityRecords(id_t road_id, unsigned int index);
 
     /**
+    Get the number of <signalReference> elements on specified road - a signalReference points to a
+    <signal> owned by this or a different road (e.g. several approach lanes/roads sharing one
+    physical signal head), so it is never itself returned by RM_GetRoadSign() above.
+    @param road_id The road along which to look for signal references
+    @return Number of signal references, -1 on error
+    */
+    RM_DLL_API int RM_GetNumberOfRoadSignalReferences(id_t road_id);
+
+    /**
+    Get the id of the <signal> that the specified <signalReference> points to
+    @param road_id The road of which to look for the signal reference
+    @param index Index of the signal reference. Note: not ID
+    @return The referenced signal's id, or -1 if road_id/index is invalid
+    */
+    RM_DLL_API int RM_GetRoadSignalReferenceId(id_t road_id, unsigned int index);
+
+    /**
     Get specified validity record of specifed road sign
     @param road_id The road of which to look for the sign
     @param signIndex Index of the sign. Note: not ID

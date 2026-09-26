@@ -3589,6 +3589,26 @@ Signal* Road::GetSignal(idx_t idx) const
     return signal_[idx];
 }
 
+void Road::AddSignalReference(int signal_id)
+{
+    signalReferenceIds_.push_back(signal_id);
+}
+
+unsigned int Road::GetNumberOfSignalReferences() const
+{
+    return static_cast<unsigned int>(signalReferenceIds_.size());
+}
+
+int Road::GetSignalReferenceId(idx_t idx) const
+{
+    if (idx >= signalReferenceIds_.size())
+    {
+        return -1;
+    }
+
+    return signalReferenceIds_[idx];
+}
+
 void Road::AddObject(RMObject* object)
 {
     object_.push_back(object);
@@ -5527,7 +5547,10 @@ bool OpenDrive::ParseOpenDriveXML(const pugi::xml_document& doc)
             // Variables to check if the country file is loaded
             bool        country_file_loaded = false;
             std::string current_country     = "";
-            for (pugi::xml_node signal = signals.child("signal"); signal; signal = signal.next_sibling())
+            // first_child(), not child("signal"): a road whose <signals> holds ONLY <signalReference>
+            // elements (no <signal> of its own at all) would otherwise never enter this loop, since
+            // child("signal") specifically searches for that tag before the walk even starts.
+            for (pugi::xml_node signal = signals.first_child(); signal; signal = signal.next_sibling())
             {
                 if (!strcmp(signal.name(), "signal"))
                 {
@@ -5727,6 +5750,14 @@ bool OpenDrive::ParseOpenDriveXML(const pugi::xml_document& doc)
                     }
 
                     r->AddSignal(sig);
+                }
+                else if (!strcmp(signal.name(), "signalReference"))
+                {
+                    // References a <signal> defined on this OR another road (e.g. several approach
+                    // lanes/roads sharing one physical signal head) - only the id is needed to look
+                    // that signal up later, not a separate placement (the referenced <signal> already
+                    // has its own position).
+                    r->AddSignalReference(atoi(signal.attribute("id").value()));
                 }
                 else
                 {

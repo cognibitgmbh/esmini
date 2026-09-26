@@ -2907,12 +2907,19 @@ namespace roadmanager
         void                                     AddLaneSection(LaneSection *lane_section);
         void                                     AddLaneOffset(LaneOffset *lane_offset);
         void                                     AddSignal(Signal *signal);
+        void                                     AddSignalReference(int signal_id);
         void                                     AddObject(RMObject *object);
         void                                     AddTunnel(Tunnel *tunnel);
         Elevation                               *GetElevation(idx_t idx) const;
         Elevation                               *GetSuperElevation(idx_t idx) const;
         unsigned int                             GetNumberOfSignals() const;
         Signal                                  *GetSignal(idx_t idx) const;
+        // A <signalReference> on this road - the id of a <signal> owned by (possibly) a different
+        // road, governing this road too (e.g. multiple approach lanes sharing one physical signal
+        // head). Not surfaced by GetSignal()/signal_ above, which only holds this road's OWN <signal>
+        // elements.
+        unsigned int                             GetNumberOfSignalReferences() const;
+        int                                      GetSignalReferenceId(idx_t idx) const;
         unsigned int                             GetNumberOfObjects() const
         {
             return static_cast<unsigned int>(object_.size());
@@ -3021,6 +3028,7 @@ namespace roadmanager
         std::vector<LaneSection *>              lane_section_;
         std::vector<LaneOffset *>               lane_offset_;
         std::vector<Signal *>                   signal_;
+        std::vector<int>                        signalReferenceIds_;
         std::vector<RMObject *>                 object_;
         std::vector<Tunnel *>                   tunnel_;
     };
