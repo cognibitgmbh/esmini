@@ -7900,8 +7900,9 @@ void Position::Init()
     direction_mode_         = DirectionMode::ALONG_S;  // Default is along road construction direction
     type_                   = PositionType::NORMAL;
     snapToLaneTypes_        = Lane::LaneType::LANE_TYPE_ANY_DRIVING;
-    status_                 = 0;
-    lockOnLane_             = false;
+    status_                   = 0;
+    lockOnLane_               = false;
+    laneLinkAwareTransitions_ = true;  // cognibit extension, see SetLaneLinkAwareTransitions()
     osi_x_                  = 0.0;
     osi_y_                  = 0.0;
     osi_z_                  = 0.0;
@@ -8086,8 +8087,9 @@ void roadmanager::Position::CopyConfig(const Position& from)
     direction_mode_  = from.direction_mode_;
     type_            = from.type_;
     relative_        = from.relative_;
-    snapToLaneTypes_ = from.snapToLaneTypes_;
-    lockOnLane_      = from.lockOnLane_;
+    snapToLaneTypes_          = from.snapToLaneTypes_;
+    lockOnLane_               = from.lockOnLane_;
+    laneLinkAwareTransitions_ = from.laneLinkAwareTransitions_;
     rel_pos_         = from.rel_pos_;
     t_trajectory_    = from.t_trajectory_;
 }
@@ -9337,10 +9339,41 @@ void Position::Track2Lane()
         return;
     }
 
+    double lane_offset = road->GetLaneOffset(s_);
+
+    // cognibit extension - see SetLaneLinkAwareTransitions()'s docstring and the "Lane-link-aware
+    // lane transitions" chapter in esmini-road-manager's top-level README.md. This is the
+    // complement to the XYZ2TrackPos() fix in that same chapter: that fix only runs exactly once,
+    // the frame a LaneSection boundary is crossed. Every following frame within the *same*
+    // LaneSection went through GetClosestLaneIdx() below regardless, which - being a fresh,
+    // memoryless nearest-lane-center search every single call - can flip back to a neighboring lane
+    // from centimeter-scale position noise whenever the true position sits close to the boundary
+    // between two equally-wide lanes (which is exactly what a not-perfectly-centered driving line
+    // does for an extended stretch after such a boundary, see the README chapter's measured
+    // example). Fix: stay in the current lane, without even considering neighbors, for as long as
+    // the position is still genuinely inside *that lane's own* width band - only fall through to a
+    // full, unbiased GetClosestLaneIdx() search (below) once the position has genuinely, physically
+    // left it. This intentionally does NOT suppress a real lane change: once the position is truly
+    // outside the current lane's own band, this check fails and the ordinary search runs.
+    if (laneLinkAwareTransitions_ && lane_section_idx == lane_section_idx_ && lane_id_ != 0)
+    {
+        if (lane_section->GetLaneById(lane_id_) != nullptr)
+        {
+            double laneCenterOffset = SIGN(lane_id_) * lane_section->GetCenterOffset(s_, lane_id_);
+            double candidateOffset  = t_ - lane_offset - laneCenterOffset;
+            if (fabs(candidateOffset) < lane_section->GetWidth(s_, lane_id_) / 2.0)
+            {
+                offset_            = candidateOffset;
+                lane_idx_          = lane_section->GetLaneIdxById(lane_id_);
+                lane_section_idx_  = lane_section_idx;
+                return;
+            }
+        }
+    }
+
     // Find the closest driving lane within the lane section
     double offset;
-    double lane_offset = road->GetLaneOffset(s_);
-    idx_t  lane_idx    = lane_section->GetClosestLaneIdx(s_, t_, lane_offset, 0, offset, true, snapToLaneTypes_);
+    idx_t  lane_idx = lane_section->GetClosestLaneIdx(s_, t_, lane_offset, 0, offset, true, snapToLaneTypes_);
 
     if (lane_idx == IDX_UNDEFINED)
     {
@@ -10072,6 +10105,62 @@ Position::XYZ2TrackPos(double x3, double y3, double z3, int mode, bool connected
         }
     }
 
+    // cognibit extension - see SetLaneLinkAwareTransitions()'s docstring and the "Lane-link-aware
+    // lane transitions" chapter in esmini-road-manager's top-level README.md for the full writeup.
+    // When the closest-point search above moved us into a new LaneSection (crossing into a
+    // different Road, or just a LaneSection boundary within the current Road - e.g. a junction
+    // connecting road with few lanes joining a multi-lane road, or a construction-zone LaneOffset
+    // that re-numbers lanes mid-road), prefer whatever lane the OpenDRIVE data explicitly declares
+    // as the successor/predecessor of the lane we were just in, instead of independently
+    // re-deriving the lane purely by nearest-center distance (which has no notion of *declared*
+    // continuity and can flip to an adjacent, never-linked lane from a small, unrelated lateral
+    // deviation - see the README chapter for two concrete real-world repros).
+    int  linkedLaneId     = 0;
+    bool haveLinkedLaneId = false;
+    if (laneLinkAwareTransitions_ && current_road != nullptr && roadMin != nullptr && lane_id_ != 0)
+    {
+        LaneSection* old_lsec = current_road->GetLaneSectionByIdx(lane_section_idx_);
+        LaneSection* new_lsec = roadMin->GetLaneSectionByS(closestS);
+
+        if (old_lsec != nullptr && new_lsec != nullptr && old_lsec != new_lsec)
+        {
+            bool direction_known = true;
+            bool moving_forward  = true;
+
+            if (current_road == roadMin)
+            {
+                // Same road, just crossed a LaneSection boundary - direction is simply which way s moved.
+                moving_forward = (closestS >= s_);
+            }
+            else if (current_road->GetLink(LinkType::SUCCESSOR) != nullptr && current_road->GetLink(LinkType::SUCCESSOR)->GetElementId() == roadMin->GetId())
+            {
+                moving_forward = true;
+            }
+            else if (current_road->GetLink(LinkType::PREDECESSOR) != nullptr &&
+                     current_road->GetLink(LinkType::PREDECESSOR)->GetElementId() == roadMin->GetId())
+            {
+                moving_forward = false;
+            }
+            else
+            {
+                // roadMin isn't a direct road-level neighbor of current_road as far as their own
+                // <link> elements are concerned (e.g. a relocation/teleport onto an unrelated part
+                // of the network) - no declared lane continuity applies, don't guess.
+                direction_known = false;
+            }
+
+            if (direction_known)
+            {
+                int candidate = old_lsec->GetConnectingLaneId(lane_id_, moving_forward ? LinkType::SUCCESSOR : LinkType::PREDECESSOR);
+                if (new_lsec->GetLaneById(candidate) != nullptr)
+                {
+                    linkedLaneId     = candidate;
+                    haveLinkedLaneId = true;
+                }
+            }
+        }
+    }
+
     // Set position exact on reference line
     ReturnCode retvalue = SetTrackPosMode(roadMin->GetId(), closestS, 0.0, 0, true);  // skip z, h, p, r
 
@@ -10083,7 +10172,14 @@ Position::XYZ2TrackPos(double x3, double y3, double z3, int mode, bool connected
     latOffset /= cos(AVOID_ZERO(GetRRoad()));  // compensate for banking
 
     // Update lateral offsets
-    if (lockOnLane_)
+    if (haveLinkedLaneId)
+    {
+        LaneSection* new_lsec           = roadMin->GetLaneSectionByS(closestS);
+        double       lane_offset        = roadMin->GetLaneOffset(closestS);
+        double       linkedLaneCenter_t = SIGN(linkedLaneId) * new_lsec->GetCenterOffset(closestS, linkedLaneId) + lane_offset;
+        SetLanePosMode(roadMin->GetId(), linkedLaneId, closestS, latOffset - linkedLaneCenter_t, 0);  // skip z, h, p, r
+    }
+    else if (lockOnLane_)
     {
         SetLanePosMode(roadMin->GetId(), fixedLaneId, closestS, latOffset - fixed_t, 0);  // skip z, h, p, r
     }

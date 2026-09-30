@@ -4754,6 +4754,36 @@ namespace roadmanager
             lockOnLane_ = mode;
         }
 
+        /**
+                cognibit extension (see "Lane-link-aware lane transitions" chapter in
+                esmini-road-manager's top-level README.md for the full writeup of the bug this
+                fixes and why the fix lives here instead of in a lookahead-based provider). Controls
+                whether XYZ2TrackPos(), when the closest-point search moves the position into a new
+                LaneSection (whether by crossing into a different Road or just a LaneSection boundary
+                within the same Road), prefers the lane the OpenDRIVE data explicitly declares as the
+                successor/predecessor of the lane we were just in (Lane::GetLink() /
+                LaneSection::GetConnectingLaneId()), over always re-deriving the lane from scratch by
+                pure nearest-lane-center distance (LaneSection::GetClosestLaneIdx()).
+                Pure nearest-lane-center search has no notion of *declared* lane continuity - right at
+                a junction connecting-road boundary or a construction-zone LaneOffset-driven
+                re-numbering, two adjacent lanes can be nearly equidistant from the query point, and a
+                position that (for unrelated reasons, e.g. a not-perfectly-centered driving line) is a
+                few tens of centimeters off center can flip to a lane never declared as that lane's
+                continuation - which then also makes GetOffset()/GetLaneId() (and everything fed from
+                them, like a lane-centering control loop) see a discontinuous jump even though the
+                real-world position barely moved.
+                Default true, since it is a strict correctness improvement over always trusting pure
+                proximity; exposed as an opt-out (mirroring SetLockOnLane() above) for any caller that
+                specifically wants the old geometry-only behavior back, e.g. to reproduce/compare
+                against it.
+                @parameter mode True=prefer declared lane continuity at LaneSection transitions
+                (default), False=always resolve purely by nearest-lane-center distance
+        */
+        void SetLaneLinkAwareTransitions(bool mode)
+        {
+            laneLinkAwareTransitions_ = mode;
+        }
+
         RouteStrategy GetRouteStrategy() const
         {
             return routeStrategy_;
@@ -4839,7 +4869,9 @@ namespace roadmanager
         int UpdateTrajectoryPos();
 
         // Control lane belonging
-        bool lockOnLane_;  // if true then keep logical lane regardless of lateral position, default false
+        bool lockOnLane_;                 // if true then keep logical lane regardless of lateral position, default false
+        bool laneLinkAwareTransitions_;    // if true, prefer declared lane continuity at LaneSection transitions over
+                                            // pure nearest-lane-center search, default true - see SetLaneLinkAwareTransitions()
 
         // trajectory reference
         RMTrajectory *trajectory_;  // if pointer set, the position corresponds to a point along (s) the trajectory
